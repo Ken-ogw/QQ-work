@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="K.Ogawa">
+<!-- 救急科 勤務表アプリ  Version 1.0.0 (2026-11-20)  Copyright (c) 2026 K.Ogawa. All rights reserved. -->
+<title>救急科 勤務表</title>
+<style>
+:root{--bg:#f5f6f8;--line:#d9dde3;--text:#1d232b;--muted:#6b7480;--accent:#1f5fbf;--red:#d23b3b;--warn:#fff4d6}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+header{background:#18324f;color:#fff;padding:8px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:30}
+header h1{font-size:16px;margin:0 6px 0 0}
+header .btn{background:transparent;color:#fff;border-color:#5c7593}
+.sp{flex:1}
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap;padding:8px 12px;background:#fff;border-bottom:1px solid var(--line)}
+nav.tabs button{border:1px solid var(--line);background:#fff;padding:6px 10px;border-radius:6px;cursor:pointer}
+nav.tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.badge{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font-size:11px;text-align:center;margin-left:3px}
+main{padding:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:12px}
+.card h3{margin:0 0 8px;font-size:15px}
+button{font:inherit}
+.btn{border:1px solid var(--line);background:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;color:var(--text)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.dan{border-color:var(--red);color:var(--red)}
+.btn.sm{padding:2px 8px;font-size:12px}
+input,select,textarea{font:inherit;padding:5px 7px;border:1px solid var(--line);border-radius:5px;background:#fff;max-width:100%}
+input[type=number]{width:80px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--muted);font-size:12px}
+.ok{color:#18803a}
+table{border-collapse:collapse}
+.gridwrap{overflow:auto;max-height:calc(100vh - 170px);border:1px solid var(--line);background:#fff}
+table.grid{font-size:12px}
+table.grid th,table.grid td{border:1px solid var(--line);text-align:center;padding:0;min-width:32px;height:30px;position:relative}
+table.grid thead th{position:sticky;top:0;background:#eef1f5;z-index:5;font-weight:600;line-height:1.2}
+table.grid th.name,table.grid td.name{position:sticky;left:0;background:#fff;z-index:6;min-width:96px;text-align:left;padding:0 6px;white-space:nowrap}
+table.grid thead th.name{z-index:7;background:#eef1f5}
+table.grid th.hol{background:#fde8e8;color:#b22}
+td.holcol{background:#fff6f6}
+table.grid th.extd{background:#e3ecff;color:#1f3f8f;border-left:3px solid #1f5fbf}
+td.extc{box-shadow:inset 0 0 0 999px rgba(31,95,191,.06)}
+td.cell{cursor:pointer}
+td.ro{cursor:default}
+td.cell .lb{font-weight:600}
+.sE{background:#ffe2b5}.sN{background:#f5b9b9}.sA{background:#ececec;color:#888}.sD{background:#cfe6ff}.sM{background:#d8f2d3}.sX{background:#e3d5ff}.sI{background:#ffd3ec}.sO{background:#f6f6f6;color:#999}.sL{background:#dedede;color:#777}
+.vis{background-image:repeating-linear-gradient(45deg,transparent 0 4px,rgba(0,0,0,.06) 4px 8px)}
+td.issue{outline:2px solid var(--red);outline-offset:-2px}
+td.changed::after{content:"";position:absolute;top:2px;left:2px;width:7px;height:7px;border-radius:4px;background:#f0a000}
+tr.me td.name{background:#fff3c4}
+.dcb{position:absolute;bottom:1px;right:1px;font-size:8px;color:#fff;background:#1f5fbf;border-radius:3px;padding:0 2px;line-height:11px}
+.lock{position:absolute;top:0;right:1px;font-size:8px}
+.rq{position:absolute;bottom:0;left:1px;font-size:9px;color:var(--red);font-weight:700;line-height:11px}
+.rq.late{color:#d07000}
+td.sum{background:#fafbfc;font-size:11px;min-width:28px}
+tr.dayrow td{background:#fafbfc;font-size:11px}
+tr.dayrow td.bad{background:#ffdcdc;color:#b00;font-weight:700}
+.issues{margin:6px 0 0;padding-left:18px}
+.issues li{margin:3px 0}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:24px 10px;overflow:auto}
+.modal{background:#fff;border-radius:10px;max-width:760px;width:100%;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.modal h3{margin:0 0 10px}
+.modal h4{margin:14px 0 6px;font-size:14px}
+.shbtns button{margin:2px;min-width:50px}
+.shbtns button.on{outline:3px solid var(--accent)}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 14px;border-radius:6px;z-index:99;display:none}
+.notice{background:var(--warn);border:1px solid #f0d58a;border-radius:8px;padding:8px 12px;margin:8px 0}
+table.list{width:100%}
+table.list th,table.list td{border-bottom:1px solid var(--line);padding:6px;text-align:left;vertical-align:top}
+table.list th{background:#f3f5f8;font-weight:600;font-size:12px}
+.reqrow{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.reqrow .dt{width:70px;flex:none;font-weight:600}
+.reqrow .dt.hol{color:#c22}
+.reqrow .bd{flex:1;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.chip{display:inline-block;padding:3px 9px;border:1px solid var(--line);border-radius:14px;cursor:pointer;user-select:none;font-size:12px;background:#fff}
+.chip.on{background:#d23b3b;color:#fff;border-color:#d23b3b}
+.chip.on.blue{background:#7a3fbf;border-color:#7a3fbf}
+.tag{display:inline-block;padding:0 6px;border-radius:4px;font-size:11px;background:#eee}
+.tag.late{background:#ffe2c2;color:#a05000}
+.legend span{display:inline-block;padding:1px 6px;margin:2px;border-radius:4px;font-size:12px;border:1px solid var(--line)}
+.printonly{display:none}
+footer.appinfo{text-align:center;color:var(--muted);font-size:10px;padding:10px 8px 14px}
+.holgrid{display:flex;flex-wrap:wrap;gap:4px}
+.holgrid button{width:64px;padding:4px 2px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer;font-size:12px}
+.holgrid button.h{background:#fde8e8;color:#b22}
+.holgrid button.ov{outline:2px solid #e08a00}
+label.ck{display:inline-flex;gap:4px;align-items:center;margin-right:10px}
+@media print{
+ header,nav.tabs,.noprint,#modal{display:none!important}
+ .printonly{display:block}
+ body{background:#fff}
+ main{padding:0}
+ .gridwrap{max-height:none;overflow:visible;border:none}
+ @page{size:A4 landscape;margin:7mm}
+ table.grid{font-size:8.5px}
+ table.grid th,table.grid td{min-width:0;height:18px}
+ table.grid th.name,table.grid td.name{min-width:60px;position:static}
+ table.grid thead th{position:static}
+ .card{border:none;padding:0}
+ td.issue{outline:none}
+ td.changed::after{display:none}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal"></div>
+<div id="toast"></div>
+<script>
+// ================================================================
+//  Firebase設定:Firebaseコンソールで表示される設定値をここに貼り付けてください。
+//  null のままだと「この端末のブラウザだけに保存するデモモード」で動きます。
+// ================================================================
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAWAsNVrpbWZXLJzoFsm-g2BYxanXSDvL0",
+  authDomain: "qq-work.firebaseapp.com",
+  projectId: "qq-work",
+  storageBucket: "qq-work.firebasestorage.app",
+  messagingSenderId: "76204002154",
+  appId: "1:76204002154:web:746149d7864edc0a76f313"
+};
+/* 書き方の例)
+const FIREBASE_CONFIG = {
+  apiKey: "AIza....",
+  authDomain: "xxxx.firebaseapp.com",
+  projectId: "xxxx",
+  storageBucket: "xxxx.appspot.com",
+  messagingSenderId: "1234567890",
+  appId: "1:1234567890:web:abcdef"
+};
+*/
+const FB_VER = '10.12.2';
+const APP_VERSION = '1.0.0', APP_DATE = '2026-11-20', APP_AUTHOR = 'K.Ogawa';
+const ITER = 200; // 自動作成の試行回数
+const MAX_FAILS = 8;
+const AM_SPAN = [480, 720], PM_SPAN = [780, 1020]; // AM× = 8:00〜12:00、PM× = 13:00〜17:00 にかかる勤務に入れない // PINをこの回数続けて間違えるとロック
+
+// ---------------- 基本ユーティリティ ----------------
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = (p='id') => p + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const pad = n => String(n).padStart(2,'0');
+const dk = d => 'd' + pad(d);
+const ymStr = (y,m) => `${y}-${pad(m)}`;
+const WD = ['日','月','火','水','木','金','土'];
+function daysIn(ym){ const [y,m] = ym.split('-').map(Number); return new Date(y,m,0).getDate(); }
+function dateOf(ym,d){ const [y,m] = ym.split('-').map(Number); return new Date(y,m-1,d); }
+function iso(dt){ return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`; }
+function todayISO(){ return iso(new Date()); }
+function shiftYm(ym,k){ const [y,m] = ym.split('-').map(Number); const dt = new Date(y,m-1+k,1); return ymStr(dt.getFullYear(), dt.getMonth()+1); }
+function toMin(t){ if(!t) return null; const [h,m] = t.split(':').map(Number); if(isNaN(h)) return null; return h*60 + (m||0); }
+const clone = o => JSON.parse(JSON.stringify(o ?? null));
+const md = d => { const n0 = daysIn(S.ym); return d <= n0 ? `${+S.ym.slice(5)}/${d}` : `${+shiftYm(S.ym,1).slice(5)}/${d - n0}`; };
+const fmtTs = ts => { const t = new Date(ts); return `${t.getMonth()+1}/${t.getDate()} ${pad(t.getHours())}:${pad(t.getMinutes())}`; };
+function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(()=>t.style.display='none', 2600); }
+
+// ---------------- 日本の祝日 ----------------
+const holCache = {};
+function jpHolidays(y){
+  if(holCache[y]) return holCache[y];
+  const H = {};
+  const key = (m,d) => `${y}-${pad(m)}-${pad(d)}`;
+  const add = (m,d,n) => { H[key(m,d)] = n; };
+  const nthMon = (m,n) => { const f = new Date(y,m-1,1).getDay(); return 1 + ((8 - f) % 7) + (n-1)*7; };
+  const k = y - 1980;
+  add(1,1,'元日'); add(1,nthMon(1,2),'成人の日'); add(2,11,'建国記念の日');
+  if(y >= 2020) add(2,23,'天皇誕生日');
+  add(3,Math.floor(20.8431 + 0.242194*k - Math.floor(k/4)),'春分の日');
+  add(4,29,'昭和の日'); add(5,3,'憲法記念日'); add(5,4,'みどりの日'); add(5,5,'こどもの日');
+  add(7,nthMon(7,3),'海の日'); add(8,11,'山の日'); add(9,nthMon(9,3),'敬老の日');
+  add(9,Math.floor(23.2488 + 0.242194*k - Math.floor(k/4)),'秋分の日');
+  add(10,nthMon(10,2),'スポーツの日'); add(11,3,'文化の日'); add(11,23,'勤労感謝の日');
+  // 振替休日
+  for(const kk of Object.keys(H).sort()){
+    const dt = new Date(kk + 'T00:00:00');
+    if(dt.getDay() === 0){ const x = new Date(dt); do { x.setDate(x.getDate()+1); } while(H[iso(x)]); H[iso(x)] = '振替休日'; }
+  }
+  // 国民の休日(祝日に挟まれた平日)
+  for(let dt = new Date(y,0,2); dt.getFullYear() === y; dt.setDate(dt.getDate()+1)){
+    const kk = iso(dt); if(H[kk] || dt.getDay() === 0) continue;
+    const a = new Date(dt); a.setDate(a.getDate()-1); const b = new Date(dt); b.setDate(b.getDate()+1);
+    if(H[iso(a)] && H[iso(b)] && H[iso(a)] !== '振替休日') H[kk] = '国民の休日';
+  }
+  return holCache[y] = H;
+}
+function dayList(ym, cfg){
+  const n = daysIn(ym), out = [];
+  for(let d=1; d<=n; d++){
+    const dt = dateOf(ym,d), key = iso(dt), wd = dt.getDay();
+    const jp = jpHolidays(dt.getFullYear())[key];
+    const ov = cfg?.holidayOverrides?.[key];
+    let hol = wd===0 || wd===6 || !!jp;
+    let holName = jp || (wd===0 ? '日曜' : wd===6 ? '土曜' : '');
+    if(ov === true){ hol = true; holName = jp || '指定休日'; }
+    if(ov === 'split'){ hol = true; holName = jp || '指定休日'; }
+    if(ov === false){ hol = false; holName = '平日扱い'; }
+    // 早遅分割:休日でも救急科直を早番・遅番の2人に分ける(連休など)
+    const split = hol && (ov === 'split' || (cfg?.specialPeriods || []).some(sp => sp.split && sp.from <= key && key <= sp.to));
+    out.push({d, iso:key, wd, hol, split, holName, jp:!!jp, ov});
+  }
+  return out;
+}
+
+function dayInfo(isoD, cfg){ return dayList(isoD.slice(0,7), cfg)[+isoD.slice(8) - 1]; }
+const needsE = dy => !!dy && (!dy.hol || dy.split);
+// ---------------- 勤務の定義 ----------------
+const SH = {
+  E:{l:'早', n:'早番', c:'sE'}, N:{l:'直', n:'救急科直', c:'sN'}, A:{l:'明', n:'明け', c:'sA'},
+  D:{l:'日', n:'日勤', c:'sD'}, M:{l:'中', n:'中勤', c:'sM'}, X:{l:'外', n:'外勤', c:'sX'},
+  IM:{l:'内直', n:'内科直', c:'sI'}, SG:{l:'外直', n:'外科直', c:'sI'},
+  O:{l:'休', n:'休み', c:'sO'}, L:{l:'休職', n:'休職・産休等', c:'sL'}
+};
+const WORK = new Set(['E','N','D','M','X','IM','SG']);
+const TYPE = {senmon:'専門医', senkou:'専攻医', visitor:'他院から来る医師'};
+const TYPE_S = {senmon:'専', senkou:'攻', visitor:'他'};
+const isVisitor = s => s && s.type === 'visitor';
+function canDo(s, code){
+  if(!s || s.active === false) return false;
+  if(code==='N' || code==='E') return !isVisitor(s) && !!s.canDuty && !s.dayOnly;
+  if(code==='M' || code==='X') return !isVisitor(s);
+  return true;
+}
+const canDC = s => !!s && !isVisitor(s) && !!s.canDC && s.active !== false;
+function slotOf(cfg, id){ return (cfg.extSlots||[]).find(x=>x.id===id); }
+function hospOf(cfg, id){ return (cfg.hospitals||[]).find(x=>x.id===id); }
+function slotName(cfg, sl){ if(!sl) return '外勤'; const h = hospOf(cfg, sl.hospId); return (h ? h.name : '外勤') + (sl.label ? `(${sl.label})` : ''); }
+function cellLabel(c, cfg){
+  if(!c || !c.s) return '';
+  if(c.s === 'X'){ const sl = slotOf(cfg, c.slot); const h = sl && hospOf(cfg, sl.hospId); return h ? h.name.slice(0,2) : '外'; }
+  return SH[c.s]?.l || c.s;
+}
+function cellName(c, cfg){
+  if(!c || !c.s) return '空き';
+  if(c.s === 'X') return '外勤:' + slotName(cfg, slotOf(cfg, c.slot));
+  return (SH[c.s]?.n || c.s) + (c.dc ? '(DC)' : '');
+}
+function diffCell(a,b){ return (a?.s||'') !== (b?.s||'') || !!a?.dc !== !!b?.dc || (a?.slot||'') !== (b?.slot||''); }
+function diffCells(A, B){
+  A = A||{}; B = B||{}; const out = [];
+  const sids = new Set([...Object.keys(A), ...Object.keys(B)]);
+  for(const sid of sids){ const ks = new Set([...Object.keys(A[sid]||{}), ...Object.keys(B[sid]||{})]);
+    for(const k of ks){ if(diffCell(A[sid]?.[k], B[sid]?.[k])) out.push({sid, d:+k.slice(1), from:A[sid]?.[k], to:B[sid]?.[k]}); } }
+  return out.sort((a,b)=>a.d-b.d);
+}
+function cleanCell(c){ if(!c) return null; const o = {s:c.s||''}; if(c.dc) o.dc = true; if(c.lock) o.lock = true; if(c.cnt) o.cnt = true; if(c.slot) o.slot = c.slot; return o; }
+
+// ---------------- 保存層 ----------------
+function setPath(obj, parts, v){
+  let o = obj;
+  for(let i=0; i<parts.length-1; i++){ if(typeof o[parts[i]] !== 'object' || o[parts[i]] === null) o[parts[i]] = {}; o = o[parts[i]]; }
+  const k = parts[parts.length-1];
+  if(v === null || v === undefined) delete o[k]; else o[k] = v;
+}
+class LocalStore {
+  constructor(){ this.subs = {}; window.addEventListener('storage', e => { if(e.key && e.key.startsWith('kinmu:data:')) this.emit(e.key.slice(11)); }); }
+  k(p){ return 'kinmu:data:' + p; }
+  read(p){ try { return JSON.parse(localStorage.getItem(this.k(p)) || 'null'); } catch(e){ return null; } }
+  async get(p){ return this.read(p); }
+  async set(p, obj){ localStorage.setItem(this.k(p), JSON.stringify(obj)); this.emit(p); }
+  async patch(p, patch){ const o = this.read(p) || {}; for(const [k,v] of Object.entries(patch)) setPath(o, k.split('.'), (v===null||v===undefined) ? null : clone(v)); await this.set(p, o); }
+  subscribe(p, cb){ (this.subs[p] = this.subs[p] || []).push(cb); setTimeout(()=>cb(this.read(p)), 0); return () => { this.subs[p] = (this.subs[p]||[]).filter(x=>x!==cb); }; }
+  emit(p){ (this.subs[p]||[]).forEach(cb => cb(this.read(p))); }
+  async listMonths(){ const out = []; for(let i=0; i<localStorage.length; i++){ const k = localStorage.key(i); if(k.startsWith('kinmu:data:months/')) out.push(k.slice(18)); } return out; }
+}
+class FireStore {
+  constructor({fs, db}){ this.fs = fs; this.db = db; }
+  ref(p){ if(p === 'config') return this.fs.doc(this.db, 'kinmu', 'config'); const [c,id] = p.split('/'); return this.fs.doc(this.db, c, id); }
+  async get(p){ const s = await this.fs.getDoc(this.ref(p)); return s.exists() ? s.data() : null; }
+  async set(p, o){ await this.fs.setDoc(this.ref(p), clone(o)); }
+  async patch(p, patch){
+    const u = {};
+    for(const [k,v] of Object.entries(patch)) u[k] = (v===null || v===undefined) ? this.fs.deleteField() : clone(v);
+    try { await this.fs.updateDoc(this.ref(p), u); }
+    catch(e){ if(e.code === 'not-found'){ await this.fs.setDoc(this.ref(p), {}); await this.fs.updateDoc(this.ref(p), u); } else throw e; }
+  }
+  subscribe(p, cb){ return this.fs.onSnapshot(this.ref(p), s => cb(s.exists() ? s.data() : null), e => { console.error(e); toast('読み込みエラー: ' + e.code); }); }
+  async listMonths(){ const q = await this.fs.getDocs(this.fs.collection(this.db, 'months')); return q.docs.map(d=>d.id); }
+}
+async function loadFirebase(conf){
+  const appMod = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-app.js`);
+  const fs = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-firestore.js`);
+  const app = appMod.initializeApp(conf);
+  return {fs, db: fs.getFirestore(app)};
+}
+async function patchMonth(patch){ try { await S.store.patch('months/' + S.ym, patch); } catch(e){ console.error(e); toast('保存に失敗しました: ' + (e.code||e.message)); } }
+async function saveCfg(mut){ const c = clone(S.cfg); mut(c); try { await S.store.set('config', c); } catch(e){ console.error(e); toast('保存に失敗しました: ' + (e.code||e.message)); } }
+async function hashPin(sid, pin){
+  const data = new TextEncoder().encode('kinmu:' + sid + ':' + pin);
+  if(window.crypto && crypto.subtle){ const h = await crypto.subtle.digest('SHA-256', data); return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+  let h = 0; for(const b of data) h = (h*31 + b) >>> 0; return 'f' + h.toString(16);
+}
+
+// ---------------- 状態 ----------------
+const S = { store:null, mode:'local', cfg:undefined, month:undefined, prev:null, ym:null, user:null, tab:null, modal:null, compareV:undefined, unsubM:null, pending:false, reqTarget:null, swf:{} };
+function normCfg(c){
+  if(!c) return null;
+  c.staff = c.staff || []; c.hospitals = c.hospitals || []; c.extSlots = c.extSlots || [];
+  c.settings = Object.assign({minDay:4, maxMid:2, minGap:1, avgDuty:null}, c.settings || {});
+  c.holidayOverrides = c.holidayOverrides || {};
+  c.specialPeriods = c.specialPeriods || [];
+  c.staff.forEach(s => { s.leaves = s.leaves || []; s.weekly = s.weekly || {}; if(s.dutyAdj == null) s.dutyAdj = 0; });
+  return c;
+}
+
+// ---------------- 判定ロジック ----------------
+function onLeave(s, isoD){ return (s.leaves||[]).some(l => l.from && l.to && l.from <= isoD && isoD <= l.to); }
+function leaveLabel(s, isoD){ const l = (s.leaves||[]).find(l => l.from && l.to && l.from <= isoD && isoD <= l.to); return l ? (l.label || '休職') : ''; }
+function reqOf(month, sid, d){ return month?.requests?.[sid]?.[dk(d)] || null; }
+function reqMark(r){
+  if(!r) return '';
+  if(r.off) return '×';
+  const p = []; if(r.im) p.push('内'); if(r.sg) p.push('外'); if(r.noDuty) p.push('直×'); if(r.noEarly) p.push('早×'); if(r.noAke) p.push('明×'); if(r.am) p.push('AM×'); if(r.pm) p.push('PM×'); if(r.times?.length) p.push('時×');
+  return p.join('').slice(0,4);
+}
+function reqText(r){
+  if(!r) return 'なし';
+  const p = [];
+  if(r.off) p.push('終日×'); if(r.noDuty) p.push('当直×'); if(r.noEarly) p.push('早番×'); if(r.noAke) p.push('明け×'); if(r.am) p.push('AM×'); if(r.pm) p.push('PM×');
+  if(r.im) p.push('内科直'); if(r.sg) p.push('外科直');
+  (r.times||[]).forEach(t => p.push(`${t.from}〜${t.to}×`));
+  if(r.note) p.push('メモ:' + r.note);
+  return p.join('・') || 'なし';
+}
+function makeCtx(opts = {}){
+  const cfg = S.cfg, month0 = S.month || {}, ym = S.ym, nx = S.next || {};
+  let days = dayList(ym, cfg), month = month0;
+  const n0 = days.length;
+  // 翌月の最初のk日も一緒に作る(翌月のデータを日番号 n0+1… に読み替えて扱う)
+  const k = opts.noExt ? 0 : Math.max(0, Math.min(10, +month0.extendDays || 0));
+  if(k > 0){
+    days = days.concat(dayList(shiftYm(ym,1), cfg).slice(0, k).map(x => ({...x, d:n0 + x.d, ext:true})));
+    const remap = obj => { const o = {}; for(const sid in (obj||{})) for(const kk in obj[sid]){ const j = +kk.slice(1); if(j <= k) (o[sid] = o[sid] || {})[dk(n0 + j)] = obj[sid][kk]; } return o; };
+    const merge = (a, b) => { const o = clone(a || {}); for(const sid in b) o[sid] = Object.assign(o[sid] || {}, b[sid]); return o; };
+    const rmJ = {}; for(const kk in (nx.removed || {})){ const i = kk.lastIndexOf('_'), j = +kk.slice(i + 2); if(j <= k) rmJ[kk.slice(0, i) + '_' + dk(n0 + j)] = true; }
+    month = {...month0, requests:merge(month0.requests, remap(nx.requests)), cells:merge(month0.cells, remap(nx.cells)), removed:{...(month0.removed || {}), ...rmJ}};
+  }
+  const staff = cfg.staff.filter(s => s.active !== false);
+  const map = {}; cfg.staff.forEach(s => map[s.id] = s);
+  const prevN = {}; const pc = (S.prev && S.prev.cells) || {}; const pn = daysIn(shiftYm(ym,-1));
+  staff.forEach(s => { const row = pc[s.id] || {}; let last = -99; for(let d=pn; d>=pn-5; d--){ if(row[dk(d)]?.s === 'N'){ last = d - pn; break; } } prevN[s.id] = last; });
+  const nextReq1 = {}, nextCell1 = {};
+  staff.forEach(s => { nextReq1[s.id] = nx.requests?.[s.id]?.[dk(k + 1)] || null; nextCell1[s.id] = nx.cells?.[s.id]?.[dk(k + 1)] || null; });
+  const prevExt = Math.max(0, +(S.prev?.extendDays) || 0);
+  const ctx = {ym, cfg, month, days, n:days.length, n0, ext:k, prevExt, staff, map, prevN, nextReq1, nextCell1, editDays:null};
+  ctx.special = specialInfo(ctx, pc, nx.cells || {});
+  return ctx;
+}
+// 年末年始などの特別期間:月をまたいでも、その期間の直の回数を別に数えて均等にする
+function specialInfo(ctx, prevCells, nextCells){
+  const out = [];
+  const pym = shiftYm(ctx.ym, -1), nym = shiftYm(ctx.ym, 1);
+  for(const sp of (ctx.cfg.specialPeriods || [])){
+    if(!sp.from || !sp.to || sp.from > sp.to) continue;
+    const days = new Set(ctx.days.filter(x => x.iso >= sp.from && x.iso <= sp.to).map(x => x.d));
+    if(!days.size) continue;
+    let total = 0;
+    for(let t = Date.parse(sp.from + 'T00:00:00'); t <= Date.parse(sp.to + 'T00:00:00'); t += 864e5){ const di = dayInfo(iso(new Date(t)), ctx.cfg); total += di && di.split ? 2 : 1; }
+    const base = {};
+    const addFrom = (cells, ym2, skip = 0) => { for(const sid in cells) for(const k in cells[sid]){ const c = cells[sid][k]?.s; if(+k.slice(1) <= skip || (c !== 'N' && c !== 'E')) continue; const isoD = `${ym2}-${k.slice(1)}`; if(isoD < sp.from || isoD > sp.to) continue; if(c === 'E' && !dayInfo(isoD, ctx.cfg)?.split) continue; base[sid] = (base[sid] || 0) + 1; } };
+    addFrom(prevCells, pym); addFrom(nextCells, nym, ctx.ext || 0);
+    out.push({id:sp.id, name:sp.name || '特別期間', from:sp.from, to:sp.to, days, total, base});
+  }
+  return out;
+}
+// 翌日がその人の「曜日で不可」の日か(不可の曜日は明けにもしない)
+function nextWeeklyOff(ctx, sid, d){ const s = ctx.map[sid], dy = ctx.days[d-1]; return !!(s && dy && s.weekly?.[(dy.wd + 1) % 7] === 'off'); }
+function nextReqOf(ctx, sid, d){ return d < ctx.n ? reqOf(ctx.month, sid, d+1) : ctx.nextReq1?.[sid]; }
+function shiftSpan(ctx, code, d, cell){
+  const day = ctx.days[d-1];
+  switch(code){
+    case 'E': return [420, 930];
+    case 'N': return day.hol && !day.split ? [500, 1440] : [900, 1440];
+    case 'D': return [500, 1010];
+    case 'M': return [780, 1260];
+    case 'IM': case 'SG': return [960, 1440];
+    case 'X': { const sl = slotOf(ctx.cfg, cell?.slot); if(!sl) return [540, 1020]; const a = toMin(sl.start) ?? 540, b = toMin(sl.end) ?? 1020; return [a, b > a ? b : 1440]; }
+  }
+  return null;
+}
+// その勤務に入れない理由(なければ空文字)
+function blocks(ctx, sid, d, code, cell){
+  const s = ctx.map[sid], day = ctx.days[d-1];
+  if(!s || !day) return '対象外';
+  if(code === 'IM' || code === 'SG') return '';
+  if(onLeave(s, day.iso)) return '休職期間';
+  if(s.weekly?.[day.wd] === 'off') return '曜日で不可';
+  const r = reqOf(ctx.month, sid, d);
+  if(r){
+    if(r.off) return '終日×';
+    if(r.im || r.sg) return r.im ? '内科直あり' : '外科直あり';
+    if(code === 'N' && r.noDuty) return '当直×';
+    if(code === 'E' && r.noEarly) return '早番×';
+    const sp = shiftSpan(ctx, code, d, cell);
+    if(sp && r.am && sp[0] < AM_SPAN[1] && AM_SPAN[0] < sp[1]) return 'AM×';
+    if(sp && r.pm && sp[0] < PM_SPAN[1] && PM_SPAN[0] < sp[1]) return 'PM×';
+    if(sp && (r.times||[]).some(t => { const a = toMin(t.from), b = toMin(t.to); if(a==null || b==null) return false; const bb = b > a ? b : 1440; return a < sp[1] && sp[0] < bb; })) return '時間×';
+  }
+  return '';
+}
+const gget = (G, sid, d) => G?.[sid]?.[dk(d)];
+function gset(G, n, sid, d, c){ if(d < 1 || d > n) return; G[sid] = G[sid] || {}; if(c) G[sid][dk(d)] = c; else delete G[sid][dk(d)]; }
+const ed = (ctx, d) => !ctx.editDays || ctx.editDays.has(d);
+
+function canDutyAt(G, ctx, sid, d){
+  const s = ctx.map[sid];
+  if(!canDo(s,'N') || gget(G,sid,d) || blocks(ctx,sid,d,'N')) return false;
+  if(d === 1 ? ctx.prevN[sid] === 0 : gget(G,sid,d-1)?.s === 'N') return false;
+  if(d < ctx.n){ const nx = gget(G,sid,d+1); if(nx && nx.s !== 'A') return false; }
+  else { const nc = ctx.nextCell1?.[sid]; if(nc && !['A','O','L'].includes(nc.s)) return false; }
+  { const r2 = nextReqOf(ctx, sid, d); if(r2 && (r2.noAke || r2.off || r2.im || r2.sg)) return false; }
+  if(nextWeeklyOff(ctx, sid, d)) return false;
+  const lim = (+ctx.cfg.settings.minGap || 0) + 1;
+  for(let k=d-lim; k<=d+lim; k++){ if(k !== d && k >= 1 && k <= ctx.n && gget(G,sid,k)?.s === 'N') return false; }
+  if(ctx.prevN[sid] >= d - lim) return false;
+  return true;
+}
+function canEarlyAt(G, ctx, sid, d){
+  const s = ctx.map[sid];
+  if(!canDo(s,'E') || !needsE(ctx.days[d-1]) || gget(G,sid,d) || blocks(ctx,sid,d,'E')) return false;
+  if(d === 1 ? ctx.prevN[sid] === 0 : gget(G,sid,d-1)?.s === 'N') return false;
+  return true;
+}
+function computeTargets(ctx){
+  const el = ctx.staff.filter(s => canDo(s,'N'));
+  const frac = {};
+  el.forEach(s => { let a = 0; ctx.days.forEach(day => { if(!onLeave(s, day.iso)) a++; }); frac[s.id] = a / ctx.n; });
+  const sumF = el.reduce((t,s) => t + frac[s.id], 0) || 1;
+  const adj = s => Number(s.dutyAdj) || 0;
+  const avg = Number(ctx.cfg.settings.avgDuty) || 0;
+  const nH = ctx.days.filter(x => x.hol).length, nW = ctx.days.filter(needsE).length;
+  const T = {}, TH = {}, TE = {};
+  if(avg > 0) el.forEach(s => T[s.id] = Math.max(0, avg*frac[s.id] + adj(s)));
+  else { const sumAdj = el.reduce((t,s) => t + adj(s)*(frac[s.id]>0?1:0), 0); const base = (ctx.n - sumAdj) / sumF; el.forEach(s => T[s.id] = frac[s.id] > 0 ? Math.max(0, base*frac[s.id] + adj(s)) : 0); }
+  el.forEach(s => { TH[s.id] = T[s.id] * nH / ctx.n; TE[s.id] = nW * frac[s.id] / sumF; });
+  const TS = (ctx.special || []).map(sp => { const o = {}; el.forEach(s => o[s.id] = sp.total * frac[s.id] / sumF); return o; });
+  return {T, TH, TE, TS, el};
+}
+function slotOn(sl, day){
+  if(sl.freq === 'dates') return (sl.dates||[]).includes(day.iso);
+  if(sl.skipHoliday !== false && (day.jp || day.ov === true)) return false;
+  if(+sl.weekday !== day.wd) return false;
+  if(sl.freq === 'biweekly'){ if(!sl.startDate) return true; const a = new Date(sl.startDate+'T00:00:00'), b = new Date(day.iso+'T00:00:00'); const w = Math.round((b-a)/86400000/7); return ((w%2)+2)%2 === 0; }
+  return true;
+}
+function slotPool(ctx, sl){
+  const ids = sl.mode === 'fixed' ? (sl.fixedStaff||[]) : ((sl.eligible && sl.eligible.length) ? sl.eligible : ctx.staff.filter(s=>!isVisitor(s)).map(s=>s.id));
+  return ids.filter(id => ctx.map[id] && ctx.map[id].active !== false);
+}
+function canXAt(G, ctx, id, d, sl){
+  const s = ctx.map[id];
+  if(!canDo(s,'X') || gget(G,id,d) || blocks(ctx,id,d,'X',{slot:sl.id})) return false;
+  if(sl.nextAke){
+    if(d < ctx.n){ if(gget(G,id,d+1)) return false; }
+    else { const nc = ctx.nextCell1?.[id]; if(nc && !['A','O','L'].includes(nc.s)) return false; }
+    const r2 = nextReqOf(ctx, id, d); if(r2 && (r2.noAke || r2.off || r2.im || r2.sg)) return false;
+    if(nextWeeklyOff(ctx, id, d)) return false;
+  }
+  return true;
+}
+function assignExternal(G, ctx){
+  const n = ctx.n, st = ctx.staff, removed = ctx.month.removed || {};
+  const xC = {}; st.forEach(s => { xC[s.id] = 0; for(let d=1; d<=n; d++) if(gget(G,s.id,d)?.s === 'X') xC[s.id]++; });
+  const slots = [...(ctx.cfg.extSlots||[])].sort((a,b) => (a.priority==='must'?0:1) - (b.priority==='must'?0:1));
+  for(const day of ctx.days){
+    const d = day.d; if(!ed(ctx,d)) continue;
+    for(const sl of slots){
+      if(!slotOn(sl, day) || removed[sl.id + '_' + dk(d)]) continue;
+      const have = st.filter(s => { const c = gget(G,s.id,d); return c?.s === 'X' && c.slot === sl.id; }).length;
+      const need = (+sl.count || 1) - have; if(need <= 0) continue;
+      const cand = slotPool(ctx, sl).filter(id => canXAt(G,ctx,id,d,sl)).sort((a,b) => (xC[a]-xC[b]) || (Math.random()-.5));
+      for(const id of cand.slice(0, need)){ gset(G,n,id,d,{s:'X', slot:sl.id}); xC[id]++; if(sl.nextAke && d < n && !gget(G,id,d+1)) gset(G,n,id,d+1,{s:'A'}); }
+    }
+  }
+}
+function solveDuties(G0, ctx, tg){
+  const n = ctx.n, el = tg.el.map(s => s.id);
+  let best = null, bestScore = Infinity;
+  for(let it=0; it<ITER; it++){
+    const G = clone(G0);
+    const cN = {}, cH = {}, cE = {};
+    el.forEach(id => { cN[id]=0; cH[id]=0; cE[id]=0; for(let d=1; d<=n; d++){ const c = gget(G,id,d); if(c?.s==='N'){ cN[id]++; if(ctx.days[d-1].hol) cH[id]++; } if(c?.s==='E') cE[id]++; } });
+    const SP = ctx.special || [];
+    const cS = SP.map(sp => { const o = {}; el.forEach(id => { o[id] = sp.base[id] || 0; for(const d of sp.days){ const c = gget(G,id,d)?.s; if(c === 'N' || (c === 'E' && ctx.days[d-1].split)) o[id]++; } }); return o; });
+    let unfilled = 0;
+    const needN = []; for(let d=1; d<=n; d++){ if(ed(ctx,d) && !ctx.staff.some(s => gget(G,s.id,d)?.s === 'N')) needN.push(d); }
+    const order = (it % 2 === 0)
+      ? needN.map(d => ({d, k: el.filter(id => canDutyAt(G,ctx,id,d)).length + Math.random()*3})).sort((a,b)=>a.k-b.k).map(x=>x.d)
+      : needN.slice();
+    for(const d of order){
+      const hol = ctx.days[d-1].hol; let bc = null, bk = Infinity;
+      const spi = SP.map((sp,i) => sp.days.has(d) ? i : -1).filter(i => i >= 0);
+      for(const id of el){ if(!canDutyAt(G,ctx,id,d)) continue; let k = (cN[id]-tg.T[id]) + (hol ? 0.7*(cH[id]-tg.TH[id]) : 0) + Math.random()*0.6; for(const i of spi) k += 1.2*(cS[i][id]-tg.TS[i][id]); if(k < bk){ bk = k; bc = id; } }
+      if(!bc){ unfilled++; continue; }
+      gset(G,n,bc,d,{s:'N'}); if(d < n && !gget(G,bc,d+1)) gset(G,n,bc,d+1,{s:'A'});
+      cN[bc]++; if(hol) cH[bc]++; for(const i of spi) cS[i][bc]++;
+    }
+    for(let d=1; d<=n; d++){
+      if(!ed(ctx,d) || !needsE(ctx.days[d-1]) || ctx.staff.some(s => gget(G,s.id,d)?.s === 'E')) continue;
+      const spiE = ctx.days[d-1].split ? SP.map((sp,i) => sp.days.has(d) ? i : -1).filter(i => i >= 0) : [];
+      let bc = null, bk = Infinity;
+      for(const id of el){ if(!canEarlyAt(G,ctx,id,d)) continue; let k = (cE[id]-tg.TE[id]) + 0.3*(cN[id]-tg.T[id]) + Math.random()*0.6; for(const i of spiE) k += 1.2*(cS[i][id]-tg.TS[i][id]); if(k < bk){ bk = k; bc = id; } }
+      if(!bc){ unfilled += 0.5; continue; }
+      gset(G,n,bc,d,{s:'E'}); cE[bc]++; for(const i of spiE) cS[i][bc]++;
+    }
+    let sc = unfilled * 1000;
+    el.forEach(id => { sc += (cN[id]-tg.T[id])**2 + 0.7*(cH[id]-tg.TH[id])**2 + 0.4*(cE[id]-tg.TE[id])**2; cS.forEach((o,i) => { sc += 1.5*(o[id]-tg.TS[i][id])**2; }); });
+    if(sc < bestScore){ bestScore = sc; best = G; }
+  }
+  return best;
+}
+function assignDayShifts(G, ctx){
+  const n = ctx.n, st = ctx.staff, set = ctx.cfg.settings;
+  const minDay = +set.minDay || 0, maxMid = +set.maxMid || 0;
+  const mC = {}, dcC = {};
+  st.forEach(s => { mC[s.id]=0; dcC[s.id]=0; for(let d=1; d<=n; d++){ const c = gget(G,s.id,d); if(c?.s==='M') mC[s.id]++; if(c?.dc) dcC[s.id]++; } });
+  for(const day of ctx.days){
+    if(day.hol || !ed(ctx, day.d)) continue;
+    const d = day.d;
+    for(const s of st){ if(gget(G,s.id,d)) continue; const w = s.weekly?.[day.wd]; if((w==='D'||w==='M') && canDo(s,w) && !blocks(ctx,s.id,d,w)) gset(G,n,s.id,d,{s:w}); }
+    let Dint = 0, M = 0;
+    for(const s of st){ const c = gget(G,s.id,d); if(!c) continue; if(c.s==='D' && (!isVisitor(s) || c.cnt)) Dint++; if(c.s==='M') M++; }
+    const pool = [];
+    for(const s of st){
+      if(isVisitor(s) || gget(G,s.id,d)) continue;
+      const bD = blocks(ctx,s.id,d,'D'), bM = blocks(ctx,s.id,d,'M');
+      if(!bD) pool.push({id:s.id, canM:!bM});
+      else if(!bM && M < maxMid){ gset(G,n,s.id,d,{s:'M'}); M++; mC[s.id]++; }
+    }
+    const needD = Math.max(0, minDay - Dint);
+    let mids = 0; if(pool.length > needD) mids = Math.min(pool.length - needD, Math.max(0, maxMid - M));
+    const mCands = pool.filter(p => p.canM).sort((a,b) => (mC[a.id]-mC[b.id]) || (Math.random()-.5));
+    const chosen = new Set(); for(const p of mCands){ if(chosen.size >= mids) break; chosen.add(p.id); }
+    const dcInD = st.some(s => { const c = gget(G,s.id,d); return c?.s==='D' && canDC(s); });
+    const dcPool = pool.filter(p => canDC(ctx.map[p.id]));
+    if(!dcInD && dcPool.length && dcPool.every(p => chosen.has(p.id))){
+      chosen.delete(dcPool[0].id);
+      const repl = mCands.find(p => !chosen.has(p.id) && !canDC(ctx.map[p.id])); if(repl) chosen.add(repl.id);
+    }
+    for(const p of pool){ if(chosen.has(p.id)){ gset(G,n,p.id,d,{s:'M'}); mC[p.id]++; } else gset(G,n,p.id,d,{s:'D'}); }
+    if(!st.some(s => gget(G,s.id,d)?.dc)){
+      const dcs = st.filter(s => { const c = gget(G,s.id,d); return c?.s==='D' && canDC(s) && !c.lock; }).sort((a,b) => (dcC[a.id]-dcC[b.id]) || (Math.random()-.5));
+      if(dcs[0]){ gget(G,dcs[0].id,d).dc = true; dcC[dcs[0].id]++; }
+    }
+  }
+}
+function generate(ctx, keep){
+  const n = ctx.n, st = ctx.staff, G = {};
+  st.forEach(s => G[s.id] = {});
+  for(const sid in keep){ if(!G[sid]) continue; for(const k in keep[sid]) G[sid][k] = {...keep[sid][k]}; }
+  for(const s of st){
+    if(ctx.prevN[s.id] === 0 && !gget(G,s.id,1)) gset(G,n,s.id,1,{s:'A'});
+    for(let d=1; d<n; d++){
+      const c = gget(G,s.id,d);
+      if(c?.s === 'N' && !gget(G,s.id,d+1)) gset(G,n,s.id,d+1,{s:'A'});
+      if(c?.s === 'X' && slotOf(ctx.cfg, c.slot)?.nextAke && !gget(G,s.id,d+1)) gset(G,n,s.id,d+1,{s:'A'});
+    }
+    for(let d=1; d<=n; d++){
+      if(gget(G,s.id,d)) continue;
+      const r = reqOf(ctx.month, s.id, d);
+      if(r?.im) gset(G,n,s.id,d,{s:'IM'});
+      else if(r?.sg) gset(G,n,s.id,d,{s:'SG'});
+      else if(onLeave(s, ctx.days[d-1].iso)) gset(G,n,s.id,d,{s:'L'});
+    }
+  }
+  assignExternal(G, ctx);
+  const G2 = solveDuties(G, ctx, computeTargets(ctx)) || G;
+  assignDayShifts(G2, ctx);
+  return G2;
+}
+
+// ---------------- チェック(問題検出) ----------------
+function cellIssuesFor(ctx, cells, sid){
+  const s = ctx.map[sid], out = {}, row = cells[sid] || {};
+  if(!s) return out;
+  const lim = (+ctx.cfg.settings.minGap || 0) + 1;
+  const add = (d,m) => { (out[d] = out[d] || []).push(m); };
+  for(let d=1; d<=ctx.n; d++){
+    const c = row[dk(d)], code = c?.s || '', r = reqOf(ctx.month, sid, d);
+    if(r && (r.im || r.sg)){ const want = r.im ? 'IM' : 'SG'; if(code !== want) add(d, (r.im ? '内科直' : '外科直') + 'の予定あり'); }
+    if(!WORK.has(code)) continue;
+    if(!canDo(s, code)) add(d, '資格外の勤務');
+    const b = blocks(ctx, sid, d, code, c); if(b) add(d, '希望・制限:' + b);
+    if(c.dc && !canDC(s)) add(d, 'DC資格外');
+    const nextAke = code === 'N' || (code === 'X' && slotOf(ctx.cfg, c.slot)?.nextAke);
+    if(nextAke){
+      const r2 = nextReqOf(ctx, sid, d); if(r2?.noAke) add(d, '翌日が明け×'); if(r2?.off) add(d, '翌日が終日×');
+      if(r2?.im || r2?.sg) add(d, '翌日に内科直・外科直');
+      if(nextWeeklyOff(ctx, sid, d)) add(d, '翌日が不可の曜日(明けにできない)');
+      const nx = d < ctx.n ? row[dk(d+1)]?.s : ctx.nextCell1?.[sid]?.s;
+      if(nx && !['A','O','L'].includes(nx)) add(d, d < ctx.n ? '翌日(明け)に勤務あり' : '翌月1日(明け)に勤務あり');
+    }
+    if(code === 'N'){
+      for(let k=d+1; k<=d+lim && k<=ctx.n; k++) if(row[dk(k)]?.s === 'N') add(d, '直の間隔が短い');
+      if(ctx.prevN[sid] >= d - lim) add(d, '前月末の直と近い');
+      if(d > 1 && row[dk(d-1)]?.s === 'N') add(d, '明けの日に直');
+    }
+    if(code === 'E' && (d === 1 ? ctx.prevN[sid] === 0 : row[dk(d-1)]?.s === 'N')) add(d, '明けの日に早番');
+  }
+  return out;
+}
+function countIss(ctx, cells, sid){ return Object.values(cellIssuesFor(ctx, cells, sid)).reduce((t,a) => t + a.length, 0); }
+function dayCounts(ctx, cells){
+  const out = {};
+  for(const day of ctx.days){
+    const o = {N:0, E:0, Dint:0, M:0, DC:0, vis:[], X:{}};
+    for(const s of ctx.staff){
+      const c = cells[s.id]?.[dk(day.d)]; if(!c) continue;
+      if(c.s==='N') o.N++; if(c.s==='E') o.E++; if(c.s==='M') o.M++; if(c.dc) o.DC++;
+      if(c.s==='D'){ if(isVisitor(s) && !c.cnt) o.vis.push(s.id); else o.Dint++; }
+      if(c.s==='X') (o.X[c.slot] = o.X[c.slot] || []).push(s.id);
+    }
+    out[day.d] = o;
+  }
+  return out;
+}
+function analyze(ctx, cells){
+  const cell = {}, day = {}, sug = {};
+  for(const s of ctx.staff){ const x = cellIssuesFor(ctx, cells, s.id); if(Object.keys(x).length) cell[s.id] = x; }
+  const dc = dayCounts(ctx, cells), set = ctx.cfg.settings, removed = ctx.month.removed || {};
+  const minDay = +set.minDay || 0, maxMid = +set.maxMid || 0;
+  for(const dy of ctx.days){
+    const o = dc[dy.d], iss = [], sg = [];
+    if(o.N === 0) iss.push('直なし'); if(o.N > 1) iss.push('直が複数');
+    if(needsE(dy)){ if(o.E === 0) iss.push('早番なし'); if(o.E > 1) iss.push('早番が複数'); }
+    if(!dy.hol){
+      if(o.Dint < minDay){
+        iss.push(`日勤${o.Dint}名(必要${minDay})`);
+        o.vis.forEach(id => sg.push({type:'cnt', sid:id}));
+        for(const [slot, ids] of Object.entries(o.X)){ const sl = slotOf(ctx.cfg, slot); if(sl && sl.priority !== 'must') sg.push({type:'rmx', key: slot + '_' + dk(dy.d), slot}); }
+      }
+      if(o.M > maxMid) iss.push(`中勤${o.M}名(上限${maxMid})`);
+      if(o.M > 0 && o.Dint < minDay) iss.push('日勤不足なのに中勤あり');
+      if(o.DC === 0) iss.push('DCなし'); if(o.DC > 1) iss.push('DCが複数');
+    }
+    for(const sl of (ctx.cfg.extSlots||[])){
+      if(!slotOn(sl, dy) || removed[sl.id + '_' + dk(dy.d)]) continue;
+      const have = (o.X[sl.id] || []).length;
+      if(have < (+sl.count || 1)) iss.push(`${slotName(ctx.cfg, sl)} 未割当`);
+    }
+    if(iss.length) day[dy.d] = iss;
+    if(sg.length) sug[dy.d] = sg;
+  }
+  return {cell, day, sug};
+}
+
+// ---------------- 候補・入れ替え ----------------
+function fallbackCell(ctx, sid, d, prev){
+  const dy = ctx.days[d-1]; if(!dy || dy.hol) return null;
+  const k = prev && ['D','M'].includes(prev.s) ? {s:prev.s} : {s:'D'};
+  return blocks(ctx, sid, d, k.s) ? null : k;
+}
+function applyReplace(ctx, cells, from, to, d, code){
+  const n = ctx.n, C = clone(cells);
+  const toOld = gget(C,to,d), toOldNext = d < n ? gget(C,to,d+1) : null;
+  if(code === 'N'){
+    gset(C,n,to,d,{s:'N'}); if(d < n) gset(C,n,to,d+1,{s:'A'});
+    if(from){ gset(C,n,from,d,fallbackCell(ctx,from,d,toOld)); if(d < n && gget(C,from,d+1)?.s === 'A') gset(C,n,from,d+1,fallbackCell(ctx,from,d+1,toOldNext)); }
+  } else {
+    gset(C,n,to,d,{s:'E'});
+    if(from) gset(C,n,from,d,fallbackCell(ctx,from,d,toOld));
+  }
+  return C;
+}
+function dutyCandidates(ctx, cells, d, code, holder){
+  const out = [], okOld = c => !c || (['D','M','O'].includes(c.s) && !c.lock);
+  const tg = computeTargets(ctx);
+  for(const s of ctx.staff){
+    if(s.id === holder || !canDo(s, code)) continue;
+    const old = gget(cells, s.id, d); if(!okOld(old)) continue;
+    if(code === 'N' && d < ctx.n){ const nx = gget(cells, s.id, d+1); if(!okOld(nx) && nx?.s !== 'A') continue; }
+    if(code === 'E' && !needsE(ctx.days[d-1])) continue;
+    const before = countIss(ctx, cells, s.id);
+    const C = applyReplace(ctx, cells, holder, s.id, d, code);
+    if(countIss(ctx, C, s.id) > before) continue;
+    let cnt = 0; for(let k=1; k<=ctx.n; k++) if(gget(cells, s.id, k)?.s === code) cnt++;
+    const t = code === 'N' ? tg.T[s.id] : tg.TE[s.id];
+    out.push({sid:s.id, cnt, t, k: cnt - (t || 0), old});
+  }
+  return out.sort((a,b) => a.k - b.k);
+}
+function swapRows(ctx, cells, a, b, ds){
+  const C = clone(cells);
+  for(const x of ds){ const ca = gget(cells,a,x), cb = gget(cells,b,x); gset(C,ctx.n,a,x,cb ? {...cb} : null); gset(C,ctx.n,b,x,ca ? {...ca} : null); }
+  return C;
+}
+// pの直(d)とqの直(e)を入れ替える。押し出された勤務は希望に反しない形(日勤/中勤/休み)に置き換える
+function applyDutySwap(ctx, cells, p, q, d, e){
+  const n = ctx.n, C = clone(cells);
+  const pE = gget(cells,p,e), pE1 = gget(cells,p,e+1), qD = gget(cells,q,d), qD1 = gget(cells,q,d+1);
+  gset(C,n,p,d,fallbackCell(ctx,p,d,qD));
+  if(d < n && gget(cells,p,d+1)?.s === 'A') gset(C,n,p,d+1,fallbackCell(ctx,p,d+1,qD1));
+  gset(C,n,q,e,fallbackCell(ctx,q,e,pE));
+  if(e < n && gget(cells,q,e+1)?.s === 'A') gset(C,n,q,e+1,fallbackCell(ctx,q,e+1,pE1));
+  gset(C,n,p,e,{s:'N'}); if(e < n) gset(C,n,p,e+1,{s:'A'});
+  gset(C,n,q,d,{s:'N'}); if(d < n) gset(C,n,q,d+1,{s:'A'});
+  return C;
+}
+function dutySwaps(ctx, cells, p, d){
+  const out = [], n = ctx.n, base_p = countIss(ctx, cells, p), bad = c => c && (c.lock || ['X','IM','SG','L','N','E'].includes(c.s));
+  for(const q of ctx.staff){
+    if(q.id === p || !canDo(q,'N')) continue;
+    const base_q = countIss(ctx, cells, q.id);
+    for(let e=1; e<=n; e++){
+      if(gget(cells, q.id, e)?.s !== 'N' || Math.abs(e-d) <= 1) continue;
+      if([gget(cells,p,e), e<n ? gget(cells,p,e+1) : null, gget(cells,q.id,d), d<n ? gget(cells,q.id,d+1) : null].some(bad)) continue;
+      const C = applyDutySwap(ctx, cells, p, q.id, d, e);
+      const ap = countIss(ctx, C, p), aq = countIss(ctx, C, q.id);
+      if(ap > base_p || aq > base_q) continue;
+      out.push({q:q.id, e, gain:(base_p + base_q) - (ap + aq)});
+    }
+  }
+  return out.sort((a,b) => b.gain - a.gain).slice(0, 10);
+}
+
+// ---------------- 描画 ----------------
+const isInputFocus = () => { const ae = document.activeElement; return ae && ae.closest && ae.closest('#app') && /INPUT|TEXTAREA|SELECT/.test(ae.tagName); };
+let pointerDown = false;
+function requestRender(){ if(isInputFocus() || pointerDown){ S.pending = true; return; } render(); }
+function flushRender(){ setTimeout(() => { if(S.pending && !isInputFocus() && !pointerDown){ S.pending = false; render(); } }, 60); }
+document.addEventListener('focusout', () => { if(S.pending) flushRender(); });
+document.addEventListener('pointerdown', () => { pointerDown = true; }, true);
+document.addEventListener('pointerup', () => { pointerDown = false; if(S.pending) flushRender(); }, true);
+document.addEventListener('pointercancel', () => { pointerDown = false; if(S.pending) flushRender(); }, true);
+function render(){
+  S.pending = false;
+  const gw = document.querySelector('.gridwrap'); const sc = gw ? [gw.scrollLeft, gw.scrollTop] : null; const wy = window.scrollY;
+  document.getElementById('app').innerHTML = renderShell() + `<footer class="appinfo noprint">救急科 勤務表 Version ${APP_VERSION}(${APP_DATE})  © ${APP_DATE.slice(0,4)} ${APP_AUTHOR}</footer>`;
+  const gw2 = document.querySelector('.gridwrap'); if(gw2 && sc){ gw2.scrollLeft = sc[0]; gw2.scrollTop = sc[1]; }
+  window.scrollTo(0, wy);
+  if(!S.modal || S.modal.live) renderModal();
+}
+function renderModal(){
+  const el = document.getElementById('modal');
+  if(!S.modal){ el.innerHTML = ''; return; }
+  let body = '';
+  try { body = modalHTML(); } catch(e){ console.error(e); body = '表示エラー: ' + esc(e.message); }
+  el.innerHTML = `<div class="modal-bg" onclick="if(event.target===this)App.closeModal()"><div class="modal">${body}</div></div>`;
+}
+function modeNote(){
+  return S.mode === 'firebase'
+    ? '<p class="muted">保存先: Firebase(全員で共有)</p>'
+    : '<div class="notice">デモモード:データは<b>この端末のこのブラウザだけ</b>に保存されます。全員で使うにはFirebaseの設定が必要です(手順書を参照)。</div>';
+}
+function unreadCount(){ const nn = S.month?.notifications?.[S.user?.id] || {}; return Object.values(nn).filter(x => !x.read).length; }
+function swapBadge(){ const me = S.user.id; return Object.values(S.month?.swaps || {}).filter(x => (x.to === me && x.status === 'pending') || (S.user.admin && x.status === 'accepted')).length; }
+function renderShell(){
+  if(S.cfg === undefined) return '<div class="card" style="margin:40px auto;max-width:400px">読み込み中…</div>';
+  if(S.cfg === null) return viewSetup();
+  if(!S.user) return viewLogin();
+  const admin = !!S.user.admin;
+  const tabs = admin
+    ? [['roster','勤務表作成'],['requests','希望入力'],['swaps','交代申請'],['staff','スタッフ'],['ext','外勤'],['settings','休日・設定'],['history','版・履歴'],['notices','お知らせ'],['pin','PIN変更']]
+    : [['mine','勤務表'],['requests','希望入力'],['swaps','交代申請'],['notices','お知らせ'],['pin','PIN変更']];
+  if(!S.tab || !tabs.some(t => t[0] === S.tab)) S.tab = tabs[0][0];
+  const [y,m] = S.ym.split('-').map(Number);
+  const ur = S.month ? unreadCount() : 0, sb = S.month ? swapBadge() : 0;
+  let h = `<header><h1>救急科 勤務表</h1>
+    <button class="btn sm" onclick="App.month(-1)">‹</button><b style="font-size:15px">${y}年${m}月</b><button class="btn sm" onclick="App.month(1)">›</button>
+    <span class="sp"></span><span>${esc(S.user.name)}${admin ? '(調整役)' : ''}</span>
+    <button class="btn sm" onclick="App.logout()">ログアウト</button></header>
+    <nav class="tabs">${tabs.map(([k,l]) => `<button class="${S.tab===k?'on':''}" onclick="App.tab('${k}')">${l}${k==='notices'&&ur?`<span class="badge">${ur}</span>`:''}${k==='swaps'&&sb?`<span class="badge">${sb}</span>`:''}</button>`).join('')}</nav><main>`;
+  if(S.month === undefined) h += '<div class="card">読み込み中…</div>';
+  else {
+    try {
+      h += ({roster:viewRoster, mine:viewMine, requests:viewRequests, swaps:viewSwaps, staff:viewStaff, ext:viewExt, settings:viewSettings, history:viewHistory, notices:viewNotices, pin:viewPin})[S.tab]();
+    } catch(e){ console.error(e); h += `<div class="card">表示エラー: ${esc(e.message)}</div>`; }
+  }
+  return h + '</main>';
+}
+
+function viewSetup(){
+  return `<div class="card" style="max-width:480px;margin:40px auto">
+  <h2 style="margin-top:0">初期設定</h2>
+  <p class="muted">最初に調整役(管理者)を登録します。名前は略称でもかまいません。</p>
+  <div class="row"><label>名前 <input id="su_name" placeholder="例: 小川"></label></div>
+  <div class="row" style="margin-top:6px"><label>PIN(4桁以上) <input id="su_pin" type="password" inputmode="numeric"></label></div>
+  <div class="row" style="margin-top:10px"><button class="btn pri" onclick="App.setupCreate()">作成</button></div>
+  <hr style="margin:16px 0"><p class="muted">まず動きを試す場合は、架空のスタッフ16名と希望が入ったデモデータを作れます。</p>
+  <button class="btn" onclick="App.setupDemo()">デモデータで試す(調整役のPINは 0000)</button>
+  ${modeNote()}</div>`;
+}
+function viewLogin(){
+  const st = S.cfg.staff.filter(s => s.active !== false);
+  return `<div class="card" style="max-width:420px;margin:40px auto">
+  <h2 style="margin-top:0">ログイン</h2>
+  <div class="row"><label>名前 <select id="lg_sid">${st.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select></label></div>
+  <div class="row" style="margin-top:8px"><label>PIN <input id="lg_pin" type="password" inputmode="numeric" onkeydown="if(event.key==='Enter')App.login()"></label></div>
+  <div class="row" style="margin-top:10px"><button class="btn pri" onclick="App.login()">ログイン</button></div>
+  <p class="muted">PINを忘れた場合は調整役にリセットを依頼してください。</p>${modeNote()}</div>`;
+}
+
+function legendHTML(){
+  return `<div class="legend muted">${['E','N','A','D','M','X','IM','L'].map(k => `<span class="${SH[k].c}">${SH[k].l}=${SH[k].n}</span>`).join('')}
+  <span>DC=ドクターカー</span><span class="vis">斜線=他院医師(日勤に数えない)</span><span>算=日勤に算入</span><span>🔒=固定</span><span style="outline:2px solid #d23b3b">赤枠=問題</span><span>●=比較している版から変更</span><span style="color:#d23b3b">×・直×など=希望</span><span style="color:#d07000">橙=追加希望</span></div>`;
+}
+function gridHTML(ctx, cells, opt){
+  const days = ctx.days, st = ctx.staff;
+  let h = '<div class="gridwrap"><table class="grid"><thead><tr><th class="name">氏名</th>';
+  for(const dy of days) h += `<th class="${dy.hol?'hol':''} ${dy.ext?'extd':''}" title="${esc(dy.holName)}${dy.ext?'(翌月)':''}"${opt.readonly ? '' : ` style="cursor:pointer" onclick="App.openDay(${dy.d})"`}>${dy.ext ? md(dy.d) : dy.d}<br>${WD[dy.wd]}${dy.split ? '<br><span style="font-size:9px">早遅</span>' : ''}</th>`;
+  const SP = ctx.special || [];
+  h += '<th>直</th><th>土日<br>祝直</th><th>早</th><th>日</th><th>中</th><th>DC</th><th>外</th>' + (opt.tg ? '<th>直<br>目標</th>' : '') + SP.map(sp => `<th title="${esc(sp.from)}〜${esc(sp.to)}の直(早遅分割の日は早番も含む・他の月の分を含む)">${esc(sp.name.slice(0,4))}<br>直</th>`).join('') + '</tr></thead><tbody>';
+  for(const s of st){
+    const row = cells[s.id] || {}, cnt = {N:0,NH:0,E:0,D:0,M:0,DC:0,X:0};
+    h += `<tr class="${opt.highlight===s.id?'me':''}"><td class="name"${opt.readonly ? '' : ` style="cursor:pointer" title="押すとこの人の固定をまとめて設定" onclick="App.openRow('${s.id}')"`}>${TYPE_S[s.type]||''} ${esc(s.name)}</td>`;
+    for(const dy of days){
+      const d = dy.d, c = row[dk(d)], code = c?.s || '';
+      if(code==='N'){ cnt.N++; if(dy.hol) cnt.NH++; } if(code==='E') cnt.E++; if(code==='D') cnt.D++; if(code==='M') cnt.M++; if(c?.dc) cnt.DC++; if(code==='X') cnt.X++;
+      const cls = ['cell']; if(opt.readonly) cls.push('ro');
+      if(code && SH[code]) cls.push(SH[code].c); else if(dy.hol) cls.push('holcol');
+      if(isVisitor(s) && code === 'D' && !c.cnt) cls.push('vis');
+      const iss = opt.issues?.[s.id]?.[d]; if(iss) cls.push('issue');
+      if(opt.cmp && !dy.ext && diffCell(opt.cmp[s.id]?.[dk(d)], c)) cls.push('changed');
+      if(dy.ext) cls.push('extc');
+      let tip = `${s.name} ${md(d)}(${WD[dy.wd]}) ${cellName(c, ctx.cfg)}`;
+      let inner = `<span class="lb">${esc(cellLabel(c, ctx.cfg))}</span>`;
+      if(c?.dc) inner += '<span class="dcb">DC</span>';
+      if(c?.lock) inner += '<span class="lock">🔒</span>'; else if(c?.cnt) inner += '<span class="lock">算</span>';
+      if(opt.showReq){ const r = reqOf(ctx.month, s.id, d); if(r){ const mk = reqMark(r); if(mk) inner += `<span class="rq ${r.late?'late':''}">${esc(mk)}</span>`; tip += ' / 希望:' + reqText(r); } }
+      if(iss) tip += ' / 問題:' + iss.join('、');
+      h += `<td class="${cls.join(' ')}" title="${esc(tip)}"${opt.readonly ? '' : ` onclick="App.openCell('${s.id}',${d})"`}>${inner}</td>`;
+    }
+    h += `<td class="sum">${cnt.N}</td><td class="sum">${cnt.NH}</td><td class="sum">${cnt.E}</td><td class="sum">${cnt.D}</td><td class="sum">${cnt.M}</td><td class="sum">${cnt.DC}</td><td class="sum">${cnt.X}</td>`;
+    if(opt.tg) h += `<td class="sum">${opt.tg.T[s.id] != null ? opt.tg.T[s.id].toFixed(1) : '-'}</td>`;
+    SP.forEach((sp,i) => { let c = sp.base[s.id] || 0; for(const d of sp.days){ const x = row[dk(d)]?.s; if(x === 'N' || (x === 'E' && ctx.days[d-1].split)) c++; } const t = opt.tg?.TS?.[i]?.[s.id]; h += `<td class="sum" title="目標 ${t != null ? t.toFixed(1) : '-'}">${c}${t != null ? `<span class="muted">/${t.toFixed(1)}</span>` : ''}</td>`; });
+    h += '</tr>';
+  }
+  const dc = dayCounts(ctx, cells), set = ctx.cfg.settings;
+  const rows = [['直','N'],['早','E'],['日勤(院内)','Dint'],['中勤','M'],['DC','DC']];
+  for(const [lab,key] of rows){
+    h += `<tr class="dayrow"><td class="name">${lab}</td>`;
+    for(const dy of days){
+      const o = dc[dy.d], v = o[key];
+      if(dy.hol && key !== 'N' && !(key === 'E' && dy.split)){ h += '<td></td>'; continue; }
+      let bad = false;
+      if(key==='N' || key==='E' || key==='DC') bad = v !== 1;
+      if(key==='Dint') bad = v < (+set.minDay||0);
+      if(key==='M') bad = v > (+set.maxMid||0);
+      h += `<td class="${bad?'bad':''}"${opt.readonly ? '' : ` style="cursor:pointer" onclick="App.openDay(${dy.d})"`}>${v}${key==='Dint' && o.vis.length ? `<span class="muted">+${o.vis.length}</span>` : ''}</td>`;
+    }
+    h += `<td colspan="${(opt.tg ? 8 : 7) + SP.length}"></td></tr>`;
+  }
+  return h + '</tbody></table></div>';
+}
+
+function viewRoster(){
+  const ctx = makeCtx(), m = ctx.month, cells = m.cells || {};
+  const an = analyze(ctx, cells), tg = computeTargets(ctx);
+  const conf = m.confirmed || 0, vers = m.versions || {};
+  const cmpN = S.compareV === undefined ? (conf || null) : S.compareV;
+  const cmp = cmpN ? vers['v' + cmpN]?.cells : null;
+  const pend = conf ? diffCells(vers['v' + conf]?.cells || {}, S.month.cells || {}).length : null;
+  const nm1 = +shiftYm(S.ym,1).slice(5);
+  const vnums = Object.keys(vers).map(k => +k.slice(1)).sort((a,b) => b - a);
+  const empty = !Object.keys(cells).length;
+  let h = `<div class="card noprint"><div class="row">
+    <button class="btn pri" onclick="App.ask('勤務表を自動作成します。🔒のマス以外はすべて組み直します。よろしいですか?','genAll')">自動作成(全体)</button>
+    <button class="btn" onclick="App.ask('問題がある日の前後2日だけを組み直します。ほかの日は変えません。','genPartial')"${empty?' disabled':''}>問題日の前後だけ組み直し</button>
+    <button class="btn pri" onclick="App.ask('いまの勤務表を第${conf+1}版として確定し、スタッフに配信します。変更があった人にはお知らせが届きます。','confirmVersion')"${empty?' disabled':''}>確定して配信(第${conf+1}版)</button>
+    <span class="muted">${conf ? `配信済み:第${conf}版/未配信の変更:${pend}件` : 'まだ配信していません'}</span>
+    <span class="sp"></span>
+    <label class="muted">比較する版 <select onchange="App.setCompare(this.value)"><option value="">なし</option>${vnums.map(v => `<option value="${v}" ${cmpN===v?'selected':''}>第${v}版</option>`).join('')}</select></label>
+    <button class="btn" onclick="App.ask('勤務表のすべての固定(🔒)を解除します。','lockMany',null,null,false)">固定をすべて解除</button>
+    <button class="btn" onclick="window.print()">印刷</button><button class="btn" onclick="App.csv()">Excel(CSV)</button></div>
+    <div class="row" style="margin-top:6px"><label class="muted">翌月(${nm1}月)の最初 <input type="number" min="0" max="10" value="${ctx.ext}" onchange="App.setExtend(this.value)" style="width:56px"> 日も一緒に作る</label>
+    ${ctx.ext ? `<span class="muted">→ ${nm1}/1〜${nm1}/${ctx.ext} は${nm1}月の勤務表(下書き)に入ります。配信は${nm1}月の勤務表として行います。</span>` : ''}
+    ${ctx.prevExt ? `<span class="notice" style="margin:0;padding:3px 8px">${+S.ym.slice(5)}/1〜${ctx.prevExt}は前月の勤務表と一緒に作成済みです。「自動作成(全体)」でもこの日は変わりません。</span>` : ''}</div>
+    <div style="margin-top:6px">${legendHTML()}</div>
+    <p class="muted" style="margin:4px 0 0">マスを押すと勤務の変更・固定・候補の表示ができます。日付や下の集計行を押すとその日の一覧と候補、名前を押すとその人の固定をまとめて設定できます。</p></div>`;
+  // チェック結果
+  const dKeys = Object.keys(an.day).map(Number).sort((a,b) => a-b);
+  const cl = []; for(const sid in an.cell) for(const d in an.cell[sid]) cl.push({sid, d:+d, msg:an.cell[sid][d]});
+  cl.sort((a,b) => a.d - b.d);
+  const late = []; for(const sid in (m.requests||{})) for(const k in m.requests[sid]){ const r = m.requests[sid][k]; if(r.late && ctx.map[sid]) late.push({sid, d:+k.slice(1), r}); }
+  late.sort((a,b) => a.d - b.d);
+  if(!empty){
+    h += `<div class="card noprint"><h3>チェック結果 ${dKeys.length + cl.length === 0 ? '<span class="ok">問題なし</span>' : `<span style="color:#d23b3b">${dKeys.length + cl.length}件</span>`}</h3>`;
+    if(dKeys.length + cl.length) h += '<ul class="issues">';
+    for(const d of dKeys){
+      const dy = ctx.days[d-1];
+      h += `<li><b>${md(d)}(${WD[dy.wd]})</b> ${esc(an.day[d].join('、'))} <button class="btn sm" onclick="App.openDay(${d})">候補を見る</button>`;
+      for(const sg of (an.sug[d] || [])){
+        if(sg.type === 'cnt') h += ` <button class="btn sm" onclick="App.countVisitor('${sg.sid}',${d})">${esc(ctx.map[sg.sid].name)}を日勤に算入</button>`;
+        if(sg.type === 'rmx') h += ` <button class="btn sm dan" onclick="App.ask('${esc(slotName(ctx.cfg, slotOf(ctx.cfg, sg.slot)))}(${md(d)})を外して、この日の前後を組み直します。','removeExt','${sg.key}',${d})">${esc(slotName(ctx.cfg, slotOf(ctx.cfg, sg.slot)))}を外す</button>`;
+      }
+      h += '</li>';
+    }
+    for(const x of cl) h += `<li>${esc(ctx.map[x.sid].name)} ${md(x.d)}:${esc(x.msg.join('、'))} <button class="btn sm" onclick="App.openCell('${x.sid}',${x.d})">開く</button></li>`;
+    if(dKeys.length + cl.length) h += '</ul>';
+    if(late.length) h += `<div class="notice" style="margin-top:8px"><b>追加希望(締切後または配信後に入った希望)</b><br>${late.map(x => `${esc(ctx.map[x.sid].name)} ${md(x.d)}:${esc(reqText(x.r))}`).join('<br>')}</div>`;
+    h += '</div>';
+  } else {
+    h += '<div class="card noprint">まだ勤務表がありません。「自動作成(全体)」を押してください。先にスタッフ・外勤・休日の設定と、各自の希望入力を済ませておくと確実です。</div>';
+  }
+  const [y,mm] = S.ym.split('-').map(Number);
+  h += `<div class="printonly"><b>救急科 勤務表 ${y}年${mm}月</b>${conf ? ` 第${conf}版` : '(下書き)'}</div>`;
+  h += gridHTML(ctx, cells, {issues:an.cell, cmp, showReq:true, tg});
+  return h;
+}
+
+function viewMine(){
+  const ctx = makeCtx({noExt:true}), m = ctx.month, conf = m.confirmed, me = S.user.id;
+  let h = '';
+  const ur = unreadCount(); if(ur) h += `<div class="notice">新しいお知らせが${ur}件あります。<button class="btn sm" onclick="App.tab('notices')">見る</button></div>`;
+  if(!conf) return h + '<div class="card">この月の勤務表はまだ配信されていません。「希望入力」から希望を入れてください。</div>';
+  const cells = m.versions['v' + conf].cells || {};
+  const mine = ctx.days.map(dy => ({dy, c:gget(cells, me, dy.d)})).filter(x => x.c && x.c.s);
+  h += `<div class="card"><h3>あなたの勤務(第${conf}版 ${fmtTs(m.versions['v'+conf].ts)}配信)</h3><div class="row" style="gap:4px 14px">${mine.map(x => `<span>${md(x.dy.d)}(${WD[x.dy.wd]}) <b>${esc(cellName(x.c, ctx.cfg))}</b></span>`).join('') || 'なし'}</div></div>`;
+  h += `<div class="card noprint">${legendHTML()}<div class="row" style="margin-top:6px"><button class="btn" onclick="window.print()">印刷</button></div></div>`;
+  const [y,mm] = S.ym.split('-').map(Number);
+  h += `<div class="printonly"><b>救急科 勤務表 ${y}年${mm}月 第${conf}版</b></div>`;
+  return h + gridHTML(ctx, cells, {readonly:true, highlight:me});
+}
+
+function isLateNow(m){ return (m.deadline && todayISO() > m.deadline) || (m.confirmed > 0); }
+function viewRequests(){
+  const ctx = makeCtx({noExt:true}), m = ctx.month, admin = S.user.admin;
+  const sid = admin && S.reqTarget && ctx.map[S.reqTarget] ? S.reqTarget : S.user.id;
+  const late = isLateNow(m);
+  let h = `<div class="card"><div class="row"><h3 style="margin:0">希望入力</h3>
+    ${admin ? `<label>対象者 <select onchange="App.setReqTarget(this.value)">${ctx.staff.map(s => `<option value="${s.id}" ${s.id===sid?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>` : ''}
+    <span class="muted">締切:${m.deadline || '未設定'}</span></div>
+    ${(+m.extendDays > 0) ? `<div class="notice">${+shiftYm(S.ym,1).slice(5)}/1〜${+shiftYm(S.ym,1).slice(5)}/${+m.extendDays} はこの月の勤務表と一緒に作ります。その日の希望は、画面上部の「›」で${+shiftYm(S.ym,1).slice(5)}月に切り替えて、この月の締切までに入れてください。 <button class="btn sm" onclick="App.month(1)">${+shiftYm(S.ym,1).slice(5)}月の希望入力へ</button></div>` : ''}
+    ${(+S.prev?.extendDays > 0) ? `<div class="notice">${+S.ym.slice(5)}/1〜${+S.ym.slice(5)}/${+S.prev.extendDays} は前月の勤務表と一緒に作ります。この日の希望は前月の締切(${esc(S.prev.deadline || '未設定')})までに入れてください。</div>` : ''}
+    ${late ? '<div class="notice">締切後または勤務表の配信後です。ここで入れた希望は「追加希望」として調整役に届き、再調整の対象になります。</div>' : ''}
+    <p class="muted" style="margin:6px 0 0">押すとON/OFFが切り替わり、すぐ保存されます。「終日×」の日は、その前日の直(翌日が明けになる)にも入りません。「AM×」は8:00〜12:00、「PM×」は13:00〜17:00にかかる勤務に入りません。「時間×」は不可の時間帯を入れて「追加」。内科直・外科直は決まったら入れてください。</p></div><div class="card">`;
+  for(const dy of ctx.days){
+    const d = dy.d, r = reqOf(m, sid, d) || {};
+    const chip = (f, lab, blue) => `<span class="chip ${r[f]?'on':''} ${blue?'blue':''}" onclick="App.reqToggle('${sid}',${d},'${f}')">${lab}</span>`;
+    h += `<div class="reqrow"><div class="dt ${dy.hol?'hol':''}">${md(d)}(${WD[dy.wd]})${dy.jp || dy.ov===true ? `<div class="muted">${esc(dy.holName)}</div>` : ''}</div><div class="bd">
+      ${chip('off','終日×')}${chip('noDuty','当直×')}${chip('noEarly','早番×')}${chip('noAke','明け×')}${chip('am','AM×')}${chip('pm','PM×')}${chip('im','内科直',1)}${chip('sg','外科直',1)}
+      ${(r.times||[]).map((t,i) => `<span class="chip on" onclick="App.reqDelTime('${sid}',${d},${i})">${esc(t.from)}〜${esc(t.to)}× ✕</span>`).join('')}
+      <span class="row" style="gap:3px"><input type="time" id="tf_${d}" style="width:96px">〜<input type="time" id="tt_${d}" style="width:96px"><button class="btn sm" onclick="App.reqAddTime('${sid}',${d})">時間×追加</button></span>
+      <input placeholder="メモ" value="${esc(r.note||'')}" style="width:140px" onchange="App.reqNote('${sid}',${d},this.value)">
+      ${r.late ? '<span class="tag late">追加希望</span>' : ''}</div></div>`;
+  }
+  return h + '</div>';
+}
+
+const SW_ST = {pending:'相手の承諾待ち', accepted:'調整役の承認待ち', approved:'承認済み', rejected:'却下', declined:'相手が辞退', cancelled:'取り消し'};
+function swapDays(cells, x, n){
+  const ds = new Set([x.d]); const c1 = gget(cells, x.from, x.d), c2 = gget(cells, x.to, x.d);
+  if((c1?.s === 'N' || c2?.s === 'N') && x.d < n) ds.add(x.d + 1);
+  if(x.e){ ds.add(x.e); const c3 = gget(cells, x.from, x.e), c4 = gget(cells, x.to, x.e); if((c3?.s === 'N' || c4?.s === 'N') && x.e < n) ds.add(x.e + 1); }
+  return [...ds];
+}
+function viewSwaps(){
+  const ctx = makeCtx({noExt:true}), m = ctx.month, me = S.user.id, conf = m.confirmed;
+  const cells = conf ? (m.versions['v'+conf].cells || {}) : null;
+  const sw = Object.entries(m.swaps || {}).map(([id,x]) => ({id, ...x})).sort((a,b) => b.ts - a.ts);
+  const nm = id => esc(ctx.map[id]?.name || '?');
+  const desc = x => `${nm(x.from)}の${md(x.d)}(${esc(cellName(gget(cells||{}, x.from, x.d), ctx.cfg))}) ${x.e ? `⇔ ${nm(x.to)}の${md(x.e)}(${esc(cellName(gget(cells||{}, x.to, x.e), ctx.cfg))})` : `→ ${nm(x.to)}が代わる`}${x.note ? ` 「${esc(x.note)}」` : ''}`;
+  let h = '<div class="card"><h3>交代を申請する</h3>';
+  if(!cells) h += '<p class="muted">勤務表が配信されてから申請できます。</p>';
+  else {
+    const f = S.swf;
+    const myDays = ctx.days.filter(dy => WORK.has(gget(cells, me, dy.d)?.s || ''));
+    const others = ctx.staff.filter(s => s.id !== me);
+    const tDays = f.to ? ctx.days.filter(dy => WORK.has(gget(cells, f.to, dy.d)?.s || '')) : [];
+    h += `<div class="row"><label>自分の日 <select onchange="App.swf('d',this.value)"><option value="">選択</option>${myDays.map(dy => `<option value="${dy.d}" ${+f.d===dy.d?'selected':''}>${md(dy.d)}(${WD[dy.wd]}) ${esc(cellName(gget(cells,me,dy.d), ctx.cfg))}</option>`).join('')}</select></label>
+      <label>相手 <select onchange="App.swf('to',this.value)"><option value="">選択</option>${others.map(s => `<option value="${s.id}" ${f.to===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>
+      <label>種類 <select onchange="App.swf('type',this.value)"><option value="cover" ${f.type!=='swap'?'selected':''}>同じ日で入れ替え</option><option value="swap" ${f.type==='swap'?'selected':''}>相手の日と交換</option></select></label>
+      ${f.type === 'swap' ? `<label>相手の日 <select onchange="App.swf('e',this.value)"><option value="">選択</option>${tDays.map(dy => `<option value="${dy.d}" ${+f.e===dy.d?'selected':''}>${md(dy.d)}(${WD[dy.wd]}) ${esc(cellName(gget(cells,f.to,dy.d), ctx.cfg))}</option>`).join('')}</select></label>` : ''}
+      <input placeholder="ひとこと(任意)" id="swnote" style="width:180px"><button class="btn pri" onclick="App.swapSubmit()">申請</button></div>
+      <p class="muted">「同じ日で入れ替え」は、その日の自分と相手の勤務を入れ替えます(相手が休みなら自分が休みになります)。直の場合は翌日の明けも一緒に入れ替えます。相手が承諾したあと、調整役が承認すると勤務表に反映されて配信されます。</p>`;
+  }
+  h += '</div>';
+  const toMe = sw.filter(x => x.to === me && x.status === 'pending');
+  if(toMe.length) h += `<div class="card"><h3>あなた宛ての申請</h3><table class="list">${toMe.map(x => `<tr><td>${desc(x)}</td><td><button class="btn sm pri" onclick="App.swapRespond('${x.id}',true)">承諾</button> <button class="btn sm" onclick="App.swapRespond('${x.id}',false)">辞退</button></td></tr>`).join('')}</table></div>`;
+  if(S.user.admin){
+    const acc = sw.filter(x => x.status === 'accepted');
+    h += '<div class="card"><h3>承認待ち(調整役)</h3>';
+    if(!acc.length) h += '<p class="muted">ありません。</p>';
+    else {
+      const draft = m.cells || {};
+      h += `<p class="muted">承認すると下書きに反映し、新しい版として配信します(下書きにある未配信の変更も一緒に配信されます)。</p><table class="list">`;
+      for(const x of acc){
+        const ds = swapDays(draft, x, ctx.n); const C = swapRows(ctx, draft, x.from, x.to, ds);
+        const before = countIss(ctx, draft, x.from) + countIss(ctx, draft, x.to), after = countIss(ctx, C, x.from) + countIss(ctx, C, x.to);
+        h += `<tr><td>${desc(x)}${after > before ? `<div style="color:#d23b3b">注意:承認すると問題が${after-before}件増えます</div>` : '<div class="ok">問題は増えません</div>'}</td><td style="white-space:nowrap"><button class="btn sm pri" onclick="App.swapApprove('${x.id}',true)">承認</button> <button class="btn sm dan" onclick="App.swapApprove('${x.id}',false)">却下</button></td></tr>`;
+      }
+      h += '</table>';
+    }
+    h += '</div>';
+  }
+  const list = S.user.admin ? sw : sw.filter(x => x.from === me || x.to === me);
+  h += `<div class="card"><h3>申請の一覧</h3>${list.length ? `<table class="list"><tr><th>日時</th><th>内容</th><th>状態</th><th></th></tr>${list.map(x => `<tr><td>${fmtTs(x.ts)}</td><td>${desc(x)}</td><td>${SW_ST[x.status]||x.status}</td><td>${x.from===me && (x.status==='pending'||x.status==='accepted') ? `<button class="btn sm" onclick="App.swapCancel('${x.id}')">取り消し</button>` : ''}</td></tr>`).join('')}</table>` : '<p class="muted">ありません。</p>'}</div>`;
+  return h;
+}
+
+function viewNotices(){
+  const nn = Object.entries(S.month?.notifications?.[S.user.id] || {}).map(([id,x]) => ({id, ...x})).sort((a,b) => b.ts - a.ts);
+  return `<div class="card"><div class="row"><h3 style="margin:0">お知らせ(${+S.ym.slice(5)}月分)</h3><span class="sp"></span>${nn.some(x=>!x.read) ? '<button class="btn sm" onclick="App.readAll()">すべて既読にする</button>' : ''}</div>
+  ${nn.length ? `<table class="list" style="margin-top:8px">${nn.map(x => `<tr><td style="width:90px">${fmtTs(x.ts)}</td><td>${x.read ? '' : '<span class="badge">新</span> '}${esc(x.text)}</td></tr>`).join('')}</table>` : '<p class="muted">お知らせはありません。</p>'}</div>`;
+}
+function viewPin(){
+  return `<div class="card" style="max-width:420px"><h3>PIN変更</h3>
+  <div class="row"><label>今のPIN <input type="password" id="pp0" inputmode="numeric"></label></div>
+  <div class="row" style="margin-top:6px"><label>新しいPIN <input type="password" id="pp1" inputmode="numeric"></label></div>
+  <div class="row" style="margin-top:6px"><label>もう一度 <input type="password" id="pp2" inputmode="numeric"></label></div>
+  <div class="row" style="margin-top:10px"><button class="btn pri" onclick="App.changePin()">変更</button></div></div>`;
+}
+
+const WEEKLY_OPT = [['','—'],['off','不可'],['D','日勤固定'],['M','中勤固定']];
+function viewStaff(){
+  const all = S.cfg.staff;
+  let h = `<div class="card"><div class="row"><h3 style="margin:0">スタッフ(${all.filter(s=>s.active!==false).length}名)</h3><span class="sp"></span><button class="btn pri" onclick="App.staffEdit('')">追加</button></div>
+  <p class="muted">「直調整」は自動作成での救急科直の回数を増減します(+1で月1回多め、-1で少なめ)。曜日設定で「日勤固定」は他院から来る医師などに使います。</p>
+  <div style="overflow:auto"><table class="list"><tr><th>順</th><th>氏名</th><th>区分</th><th>直・早</th><th>DC</th><th>日勤のみ</th><th>直調整</th><th>曜日設定</th><th>休職等</th><th>調整役</th><th></th></tr>`;
+  all.forEach((s,i) => {
+    const wk = Object.entries(s.weekly||{}).filter(([,v]) => v).map(([k,v]) => WD[k] + ':' + (WEEKLY_OPT.find(o=>o[0]===v)?.[1]||v)).join(' ');
+    const lv = (s.leaves||[]).map(l => `${l.label||'休職'} ${l.from}〜${l.to}`).join('<br>');
+    h += `<tr style="${s.active===false?'opacity:.45':''}"><td style="white-space:nowrap"><button class="btn sm" onclick="App.staffMove('${s.id}',-1)"${i===0?' disabled':''}>↑</button><button class="btn sm" onclick="App.staffMove('${s.id}',1)"${i===all.length-1?' disabled':''}>↓</button></td>
+      <td><b>${esc(s.name)}</b>${s.active===false?'(無効)':''}${s.locked ? ` <span class="tag late">ロック中</span> <button class="btn sm" onclick="App.unlock('${s.id}')">解除</button>` : (s.failCount ? ` <span class="muted">PIN誤り${s.failCount}回</span>` : '')}</td><td>${TYPE[s.type]||''}</td><td>${s.canDuty&&!isVisitor(s)?'○':'×'}</td><td>${canDC(s)?'○':'×'}</td><td>${s.dayOnly?'○':''}</td>
+      <td>${s.dutyAdj ? (s.dutyAdj>0?'+':'') + s.dutyAdj : ''}</td><td>${esc(wk)}</td><td>${lv}</td><td>${s.admin?'○':''}</td><td><button class="btn sm" onclick="App.staffEdit('${s.id}')">編集</button></td></tr>`;
+  });
+  return h + '</table></div></div>';
+}
+function modalStaff(){
+  const x = S.modal.draft, isNew = !S.modal.id;
+  const ck = (f, lab) => `<label class="ck"><input type="checkbox" ${x[f]?'checked':''} onchange="App.dset('${f}',this.checked,true)">${lab}</label>`;
+  return `<h3>${isNew ? 'スタッフを追加' : 'スタッフを編集'}</h3>
+  <div class="row"><label>氏名(略称可) <input value="${esc(x.name)}" onchange="App.dset('name',this.value)"></label>
+  <label>区分 <select onchange="App.dset('type',this.value,true,true)">${Object.entries(TYPE).map(([k,v]) => `<option value="${k}" ${x.type===k?'selected':''}>${v}</option>`).join('')}</select></label></div>
+  <div class="row" style="margin-top:8px">${x.type!=='visitor' ? ck('canDuty','救急科直・早番に入れる') + ck('canDC','DCに乗れる') + ck('dayOnly','日勤のみ(産休前など)') : '<span class="muted">他院から来る医師は日勤のみ。原則として日勤の人数に数えません。</span>'}</div>
+  ${x.locked ? `<div class="notice">PINを${MAX_FAILS}回続けて間違えたためロック中です。保存時に新しいPINを入れるか、一覧の「解除」でロックを外せます。</div>` : ''}
+  <div class="row" style="margin-top:8px">${ck('admin','調整役(管理者)')}${ck('active','有効')}
+  ${x.type!=='visitor' ? `<label>直の回数調整 <input type="number" step="0.5" value="${x.dutyAdj||0}" onchange="App.dset('dutyAdj',+this.value)"></label>` : ''}</div>
+  <h4>曜日ごとの設定</h4><p class="muted" style="margin:0 0 4px">「不可」の曜日は、その日の勤務に加えて、前日の直(その日が明けになる)にも入れません。</p><div class="row">${[1,2,3,4,5,6,0].map(w => `<label>${WD[w]} <select onchange="App.dsetWeekly(${w},this.value)">${WEEKLY_OPT.map(([k,v]) => `<option value="${k}" ${(x.weekly?.[w]||'')===k?'selected':''}>${v}</option>`).join('')}</select></label>`).join('')}</div>
+  <h4>休職・産休などの期間(この期間はすべての勤務から外します)</h4>
+  ${(x.leaves||[]).map((l,i) => `<div class="row">${esc(l.label||'休職')} ${esc(l.from)}〜${esc(l.to)} <button class="btn sm dan" onclick="App.leaveDel(${i})">削除</button></div>`).join('')}
+  <div class="row" style="margin-top:4px"><input id="lv_label" placeholder="種類(産休など)" style="width:120px"><input type="date" id="lv_from">〜<input type="date" id="lv_to"><button class="btn sm" onclick="App.leaveAdd()">期間を追加</button></div>
+  <h4>PIN</h4><div class="row"><input type="password" id="st_pin" inputmode="numeric" placeholder="${isNew ? '初期PIN(空欄なら0000)' : '変更するときだけ入力'}"></div>
+  <div class="row" style="margin-top:16px"><button class="btn pri" onclick="App.staffSave()">保存</button><button class="btn" onclick="App.closeModal()">キャンセル</button><span class="sp"></span>${isNew ? '' : `<button class="btn dan" onclick="App.staffDelete('${S.modal.id}')">削除</button>`}</div>`;
+}
+
+const FREQ = {weekly:'毎週', biweekly:'隔週', dates:'特定の日'};
+function viewExt(){
+  const cfg = S.cfg, m = S.month || {};
+  let h = `<div class="card"><h3>派遣先</h3>${cfg.hospitals.map(hp => `<div class="row" style="margin:3px 0"><input value="${esc(hp.name)}" onchange="App.hospRename('${hp.id}',this.value)"><button class="btn sm dan" onclick="App.hospDel('${hp.id}')">削除</button></div>`).join('')}
+    <div class="row" style="margin-top:6px"><input id="hp_new" placeholder="病院名"><button class="btn sm" onclick="App.hospAdd()">追加</button></div></div>`;
+  h += `<div class="card"><div class="row"><h3 style="margin:0">外勤の枠</h3><span class="sp"></span><button class="btn pri" onclick="App.slotEdit('')"${cfg.hospitals.length?'':' disabled'}>枠を追加</button></div>
+    <p class="muted">「できれば」の枠は、院内の日勤が足りない日に「外す」候補として表示されます。「必須」の枠は先に割り当てます。</p>
+    <div style="overflow:auto"><table class="list"><tr><th>派遣先</th><th>頻度</th><th>人数</th><th>時間</th><th>翌日明け</th><th>割り当て</th><th>優先度</th><th></th></tr>`;
+  for(const sl of cfg.extSlots){
+    const when = sl.freq === 'dates' ? (sl.dates||[]).join(', ') : `${FREQ[sl.freq]} ${WD[sl.weekday]}曜`;
+    const who = sl.mode === 'fixed' ? '固定:' + (sl.fixedStaff||[]).map(id => cfg.staff.find(s=>s.id===id)?.name || '?').join('・') : '自動' + (sl.eligible?.length ? `(${sl.eligible.length}名から)` : '(全員から)');
+    h += `<tr><td>${esc(slotName(cfg, sl))}</td><td>${esc(when)}</td><td>${sl.count||1}</td><td>${esc(sl.start||'')}〜${esc(sl.end||'')}</td><td>${sl.nextAke?'○':''}</td><td>${esc(who)}</td><td>${sl.priority==='must'?'必須':'できれば'}</td><td><button class="btn sm" onclick="App.slotEdit('${sl.id}')">編集</button></td></tr>`;
+  }
+  h += '</table></div></div>';
+  const rm = Object.keys(m.removed || {});
+  h += `<div class="card"><h3>この月に外した外勤</h3>${rm.length ? rm.map(k => { const [sid, dd] = k.split('_'); return `<div class="row">${md(+dd.slice(1))} ${esc(slotName(cfg, slotOf(cfg, sid)))} <button class="btn sm" onclick="App.restoreExt('${k}')">元に戻す</button></div>`; }).join('') : '<p class="muted">ありません。</p>'}</div>`;
+  return h;
+}
+function modalSlot(){
+  const x = S.modal.draft, cfg = S.cfg, internal = cfg.staff.filter(s => s.active !== false && !isVisitor(s));
+  const ckList = (f) => internal.map(s => `<label class="ck"><input type="checkbox" ${(x[f]||[]).includes(s.id)?'checked':''} onchange="App.dToggleArr('${f}','${s.id}')">${esc(s.name)}</label>`).join('');
+  return `<h3>外勤の枠</h3>
+  <div class="row"><label>派遣先 <select onchange="App.dset('hospId',this.value)">${cfg.hospitals.map(hp => `<option value="${hp.id}" ${x.hospId===hp.id?'selected':''}>${esc(hp.name)}</option>`).join('')}</select></label>
+  <label>名称(任意) <input value="${esc(x.label||'')}" placeholder="例: 当直" onchange="App.dset('label',this.value)" style="width:110px"></label>
+  <label>人数 <input type="number" min="1" value="${x.count||1}" onchange="App.dset('count',+this.value)"></label></div>
+  <div class="row" style="margin-top:8px"><label>頻度 <select onchange="App.dset('freq',this.value,true)">${Object.entries(FREQ).map(([k,v]) => `<option value="${k}" ${x.freq===k?'selected':''}>${v}</option>`).join('')}</select></label>
+  ${x.freq !== 'dates' ? `<label>曜日 <select onchange="App.dset('weekday',+this.value)">${[1,2,3,4,5,6,0].map(w => `<option value="${w}" ${+x.weekday===w?'selected':''}>${WD[w]}</option>`).join('')}</select></label>` : ''}
+  ${x.freq === 'biweekly' ? `<label>基準日(この日の週から隔週) <input type="date" value="${esc(x.startDate||'')}" onchange="App.dset('startDate',this.value)"></label>` : ''}
+  ${x.freq === 'dates' ? `<label>日付(カンマ区切り) <input value="${esc((x.dates||[]).join(', '))}" placeholder="2026-12-03, 2026-12-17" style="width:260px" onchange="App.dset('dates',this.value.split(/[,、\\s]+/).filter(Boolean))"></label>` : ''}
+  ${x.freq !== 'dates' ? `<label class="ck"><input type="checkbox" ${x.skipHoliday!==false?'checked':''} onchange="App.dset('skipHoliday',this.checked)">祝日は休み</label>` : ''}</div>
+  <div class="row" style="margin-top:8px"><label>時間 <input type="time" value="${esc(x.start||'')}" onchange="App.dset('start',this.value)">〜<input type="time" value="${esc(x.end||'')}" onchange="App.dset('end',this.value)"></label>
+  <label class="ck"><input type="checkbox" ${x.nextAke?'checked':''} onchange="App.dset('nextAke',this.checked)">翌日を明けにする(当直の外勤)</label>
+  <label>優先度 <select onchange="App.dset('priority',this.value)"><option value="must" ${x.priority==='must'?'selected':''}>必須</option><option value="optional" ${x.priority!=='must'?'selected':''}>できれば</option></select></label></div>
+  <h4>割り当て方</h4><div class="row"><label class="ck"><input type="radio" name="sm" ${x.mode!=='fixed'?'checked':''} onchange="App.dset('mode','auto',true)">自動(行ける人の中で均等に回す)</label><label class="ck"><input type="radio" name="sm" ${x.mode==='fixed'?'checked':''} onchange="App.dset('mode','fixed',true)">固定(決まった人)</label></div>
+  ${x.mode === 'fixed' ? `<div class="muted">担当者(複数選ぶと、その中から行ける人を割り当てます)</div><div>${ckList('fixedStaff')}</div>` : `<div class="muted">行ける人(誰も選ばなければ、他院医師以外の全員)</div><div>${ckList('eligible')}</div>`}
+  <div class="row" style="margin-top:16px"><button class="btn pri" onclick="App.slotSave()">保存</button><button class="btn" onclick="App.closeModal()">キャンセル</button><span class="sp"></span>${S.modal.id ? `<button class="btn dan" onclick="App.slotDel('${S.modal.id}')">削除</button>` : ''}</div>`;
+}
+
+function viewSettings(){
+  const cfg = S.cfg, st = cfg.settings, m = S.month || {}, days = dayList(S.ym, cfg);
+  let h = `<div class="card"><h3>勤務のルール</h3>
+  <div class="row"><label>平日の日勤の必要人数 <input type="number" min="0" value="${st.minDay}" onchange="App.setSetting('minDay',+this.value)"></label>
+  <label>中勤の上限人数 <input type="number" min="0" value="${st.maxMid}" onchange="App.setSetting('maxMid',+this.value)"></label></div>
+  <div class="row" style="margin-top:8px"><label>直と直の間に空ける日数(明けを除く) <input type="number" min="0" value="${st.minGap}" onchange="App.setSetting('minGap',+this.value)"></label>
+  <label>1人あたりの月平均の直回数 <input type="number" step="0.5" min="0" value="${st.avgDuty ?? ''}" placeholder="自動" onchange="App.setSetting('avgDuty',this.value===''?null:+this.value)"></label></div>
+  <p class="muted">平均回数を空欄にすると、月の日数を直に入れる人で均等に割ります。人ごとの増減は「スタッフ」の「直の回数調整」で設定します。<br>
+  例:「間に空ける日数」が1のとき、1日に直なら2日が明け、3日は休み以外の勤務、4日以降に次の直が入れます。</p></div>`;
+  h += `<div class="card"><h3>${+S.ym.slice(5)}月の希望の締切</h3><div class="row"><input type="date" value="${esc(m.deadline||'')}" onchange="App.setDeadline(this.value)"><span class="muted">締切後や配信後に入った希望は「追加希望」として扱います。</span></div></div>`;
+  h += `<div class="card"><h3>${+S.ym.slice(5)}月の休日</h3><p class="muted">押すたびに「自動 → 休日に指定 → 休日・早遅分割 → 平日扱い → 自動」と切り替わります。「早遅」は、休日でも救急科直を早番(7:00〜15:30)と遅番(15:00〜翌朝)の2人に分ける日です(日勤・中勤・DCはなし)。土日と日本の祝日は自動で休日になります。オレンジ枠は手で指定した日です。</p><div class="holgrid">`;
+  for(const dy of days) h += `<button class="${dy.hol?'h':''} ${dy.ov!==undefined?'ov':''}" onclick="App.holToggle('${dy.iso}')">${dy.d}(${WD[dy.wd]})<br><span style="font-size:10px">${esc(dy.holName || '平日')}${dy.split ? '・早遅' : ''}</span></button>`;
+  h += '</div></div>';
+  h += `<div class="card"><h3>特別期間(年末年始など)</h3>
+  <p class="muted">指定した期間の救急科直は、通常の土日祝とは別に数えて全員で均等にします。月をまたぐ期間(例:12/29〜1/3)でも、先に作った月の分を数えたうえで次の月を作ります。勤務表の右端に、期間中の直の回数/目標が出ます。</p>
+  ${(cfg.specialPeriods||[]).map(sp => `<div class="row" style="margin:3px 0"><b>${esc(sp.name)}</b> ${esc(sp.from)}〜${esc(sp.to)} <label class="ck"><input type="checkbox" ${sp.split?'checked':''} onchange="App.spSplit('${sp.id}',this.checked)">期間中の休日は早番・遅番に分ける</label><button class="btn sm dan" onclick="App.spDel('${sp.id}')">削除</button></div>`).join('') || '<p class="muted">登録はありません。</p>'}
+  <div class="row" style="margin-top:6px"><input id="sp_name" placeholder="名前(例: 年末年始、お盆)" style="width:170px"><input type="date" id="sp_from">〜<input type="date" id="sp_to"><label class="ck"><input type="checkbox" id="sp_split">休日は早番・遅番に分ける</label><button class="btn sm" onclick="App.spAdd()">追加</button></div>
+  <p class="muted">期間の日を休日にするには、上の「休日」で指定してください(土日・祝日は自動で休日です)。早遅に分けた日は、期間中の早番も直の回数に数えて均等にします。</p></div>`;
+  const fbLocal = localStorage.getItem('kinmu:fbconfig');
+  h += `<div class="card"><h3>データ</h3>${modeNote()}
+  <div class="row"><button class="btn" onclick="App.exportJSON()">バックアップを保存(JSON)</button>
+  <label class="btn">バックアップから読み込む<input type="file" accept=".json" style="display:none" onchange="App.importJSON(this)"></label></div>
+  <p class="muted">デモモードで作ったデータをFirebaseへ移すときは、デモモードでバックアップを保存し、Firebase設定後に読み込みます。</p>
+  <h4>Firebase設定(この端末で試すとき用)</h4>
+  <p class="muted">本番ではindex.html冒頭の FIREBASE_CONFIG に貼り付けて公開します(全員の端末で同じ設定になります)。ここに入れた設定はこの端末だけで有効です。</p>
+  <textarea id="fbconf" rows="5" style="width:100%" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}'>${esc(fbLocal||'')}</textarea>
+  <div class="row"><button class="btn" onclick="App.saveFbConfig()">保存して再読み込み</button>${fbLocal ? '<button class="btn dan" onclick="App.clearFbConfig()">この端末の設定を消す</button>' : ''}</div></div>`;
+  return h;
+}
+
+function viewHistory(){
+  const m = S.month || {}, vers = Object.entries(m.versions || {}).map(([k,v]) => ({n:+k.slice(1), ...v})).sort((a,b) => b.n - a.n);
+  const hist = Object.values(m.history || {}).sort((a,b) => b.ts - a.ts).slice(0, 300);
+  let h = `<div class="card"><h3>配信した版</h3>${vers.length ? `<table class="list"><tr><th>版</th><th>配信日時</th><th>配信者</th><th></th></tr>${vers.map(v => `<tr><td>第${v.n}版${v.n===m.confirmed?' <span class="tag">最新</span>':''}</td><td>${fmtTs(v.ts)}</td><td>${esc(v.by||'')}</td><td><button class="btn sm" onclick="App.compareWith(${v.n})">この版と比べる</button> <button class="btn sm" onclick="App.ask('第${v.n}版の内容を下書きに戻します(配信はしません)。','restoreVersion',${v.n})">下書きに戻す</button></td></tr>`).join('')}</table>` : '<p class="muted">まだ配信していません。</p>'}</div>`;
+  h += `<div class="card"><h3>変更履歴</h3>${hist.length ? `<table class="list">${hist.map(x => `<tr><td style="width:90px">${fmtTs(x.ts)}</td><td style="width:90px">${esc(x.by||'')}</td><td>${esc(x.text)}</td></tr>`).join('')}</table>` : '<p class="muted">ありません。</p>'}</div>`;
+  return h;
+}
+
+// ---------------- モーダル ----------------
+function modalHTML(){
+  const t = S.modal.type;
+  if(t === 'ask') return `<p style="white-space:pre-wrap">${esc(S.modal.text)}</p><div class="row" style="justify-content:flex-end"><button class="btn" onclick="App.closeModal()">キャンセル</button><button class="btn pri" onclick="App.doAsk()">実行</button></div>`;
+  if(t === 'cell') return modalCell();
+  if(t === 'day') return modalDay();
+  if(t === 'row') return modalRow();
+  if(t === 'staff') return modalStaff();
+  if(t === 'slot') return modalSlot();
+  return '';
+}
+function candHTML(ctx, cells, d, code, holder){
+  const nm = id => esc(ctx.map[id]?.name || '?');
+  const list = dutyCandidates(ctx, cells, d, code, holder).slice(0, 10);
+  let h = `<h4>${code === 'N' ? '救急科直' : '早番'}に入れる人${holder ? `(${nm(holder)}と交代)` : ''}</h4>`;
+  if(!list.length) h += '<p class="muted">条件を満たす人がいません。</p>';
+  else h += `<table class="list"><tr><th>氏名</th><th>今月の回数/目標</th><th>その日の勤務</th><th></th></tr>${list.map(x => `<tr><td>${nm(x.sid)}</td><td>${x.cnt} / ${x.t != null ? x.t.toFixed(1) : '-'}</td><td>${esc(cellName(x.old, ctx.cfg))}</td><td><button class="btn sm pri" onclick="App.replaceDuty('${holder||''}','${x.sid}',${d},'${code}')">${holder ? '交代する' : '割り当てる'}</button></td></tr>`).join('')}</table>`;
+  if(holder && code === 'N'){
+    const sw = dutySwaps(ctx, cells, holder, d);
+    h += `<h4>直の日を交換する案(${nm(holder)}の${md(d)} ⇔ 相手の直の日)</h4>`;
+    if(!sw.length) h += '<p class="muted">問題を増やさずに交換できる案がありません。</p>';
+    else h += `<table class="list">${sw.map(x => `<tr><td>${nm(x.q)}の${md(x.e)}(${WD[ctx.days[x.e-1].wd]})と交換${x.gain > 0 ? ` <span class="ok">問題が${x.gain}件減る</span>` : ''}</td><td><button class="btn sm pri" onclick="App.swapDuty('${holder}','${x.q}',${d},${x.e})">交換する</button></td></tr>`).join('')}</table>`;
+  }
+  return h;
+}
+function modalCell(){
+  const {sid, d} = S.modal, ctx = makeCtx(), cells = ctx.month.cells || {}, s = ctx.map[sid], dy = ctx.days[d-1];
+  if(!s || !dy) return '対象がありません';
+  const c = gget(cells, sid, d) || null, code = c?.s || '', r = reqOf(ctx.month, sid, d);
+  const iss = cellIssuesFor(ctx, cells, sid)[d] || [];
+  const codes = ['', 'D', 'M', 'E', 'N', 'A', 'X', 'IM', 'SG', 'O', 'L'];
+  const lab = k => k ? SH[k].n : '空き';
+  const slots = (ctx.cfg.extSlots||[]);
+  let h = `<h3>${esc(s.name)}(${TYPE[s.type]}) — ${md(d)}(${WD[dy.wd]})${dy.hol ? ' ' + esc(dy.holName) : ''}</h3>
+  <div>希望:${r ? `<b style="color:#d23b3b">${esc(reqText(r))}</b>${r.late ? ' <span class="tag late">追加希望</span>' : ''}` : 'なし'}</div>
+  ${iss.length ? `<div class="notice">問題:${esc(iss.join('、'))}</div>` : ''}
+  <h4>勤務</h4><div class="shbtns">${codes.map(k => `<button class="btn ${code===k?'on':''} ${k?SH[k].c:''}" onclick="App.setShift('${sid}',${d},'${k}')">${lab(k)}</button>`).join('')}</div>
+  <div class="row" style="margin-top:8px">
+   ${code === 'D' && !isVisitor(s) ? `<label class="ck"><input type="checkbox" ${c?.dc?'checked':''} onchange="App.toggleFlag('${sid}',${d},'dc')">DC担当</label>` : ''}
+   ${code === 'D' && isVisitor(s) ? `<label class="ck"><input type="checkbox" ${c?.cnt?'checked':''} onchange="App.toggleFlag('${sid}',${d},'cnt')">この日は日勤の人数に算入する</label>` : ''}
+   ${code === 'X' ? `<label>外勤先 <select onchange="App.setSlot('${sid}',${d},this.value)">${slots.map(sl => `<option value="${sl.id}" ${c?.slot===sl.id?'selected':''}>${esc(slotName(ctx.cfg, sl))} ${sl.freq==='dates'?'':WD[sl.weekday]}</option>`).join('')}</select></label>` : ''}
+   <label class="ck"><input type="checkbox" ${c?.lock?'checked':''} onchange="App.toggleFlag('${sid}',${d},'lock')">🔒 固定(自動作成・組み直しで動かさない${code ? '' : '。空き=休みのまま固定'})</label>
+  </div>`;
+  if(code === 'N' || code === 'E') h += candHTML(ctx, cells, d, code, sid);
+  return h + `<div class="row" style="margin-top:14px;justify-content:space-between"><button class="btn" onclick="App.openDay(${d})">この日の一覧</button><button class="btn" onclick="App.closeModal()">閉じる</button></div>`;
+}
+function modalRow(){
+  const {sid} = S.modal, ctx = makeCtx(), cells = ctx.month.cells || {}, s = ctx.map[sid];
+  if(!s) return '対象がありません';
+  const nLock = ctx.days.filter(dy => gget(cells, sid, dy.d)?.lock).length;
+  return `<h3>${esc(s.name)} の固定</h3>
+  <p>いま固定しているマス:${nLock}日</p>
+  <p class="muted">固定したマスは「自動作成(全体)」「問題日の前後だけ組み直し」で動きません。空き(休み)のマスも、休みのまま固定されます。</p>
+  <div class="row"><button class="btn pri" onclick="App.lockMany(['${sid}'],null,true)">🔒 この人の今月をすべて固定</button><button class="btn" onclick="App.lockMany(['${sid}'],null,false)">この人の固定をすべて解除</button></div>
+  <h4>期間を指定して固定</h4>
+  <div class="row"><input type="number" id="lk_from" min="1" max="${ctx.n}" value="1" style="width:64px">日〜<input type="number" id="lk_to" min="1" max="${ctx.n}" value="${ctx.n0}" style="width:64px">日 <button class="btn sm" onclick="App.lockRange('${sid}',true)">固定</button><button class="btn sm" onclick="App.lockRange('${sid}',false)">解除</button>${ctx.ext ? `<span class="muted">(${ctx.n0+1}〜${ctx.n}は翌月1〜${ctx.ext}日)</span>` : ''}</div>
+  <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" onclick="App.closeModal()">閉じる</button></div>`;
+}
+function modalDay(){
+  const {d} = S.modal, ctx = makeCtx(), cells = ctx.month.cells || {}, dy = ctx.days[d-1];
+  const an = analyze(ctx, cells), dc = dayCounts(ctx, cells)[d];
+  const nm = id => esc(ctx.map[id]?.name || '?');
+  const by = code => ctx.staff.filter(s => gget(cells, s.id, d)?.s === code);
+  let h = `<h3>${md(d)}(${WD[dy.wd]})${dy.hol ? ' ' + esc(dy.holName) : ''} の勤務</h3>`;
+  if(an.day[d]) h += `<div class="notice">問題:${esc(an.day[d].join('、'))}</div>`;
+  const line = (lab, arr, fn) => `<div style="margin:3px 0"><b>${lab}</b>:${arr.length ? arr.map(s => `<a href="#" onclick="App.openCell('${s.id}',${d});return false">${nm(s.id)}${fn ? fn(s) : ''}</a>`).join('、') : '—'}</div>`;
+  h += line(dy.split ? '救急科直(遅番)' : '救急科直', by('N'));
+  if(needsE(dy) && dy.hol) h += line('早番', by('E'));
+  if(!dy.hol){
+    h += line('早番', by('E'));
+    h += line(`日勤(院内${dc.Dint}名)`, by('D'), s => { const c = gget(cells, s.id, d); return (c.dc ? '[DC]' : '') + (isVisitor(s) ? (c.cnt ? '[算入]' : '[+α]') : ''); });
+    h += line('中勤', by('M'));
+  }
+  h += line('外勤', by('X'), s => `(${esc(slotName(ctx.cfg, slotOf(ctx.cfg, gget(cells, s.id, d).slot)))})`);
+  h += line('明け', by('A'));
+  h += line('内科直・外科直', [...by('IM'), ...by('SG')]);
+  const restIds = ctx.staff.filter(s => !gget(cells, s.id, d) || ['O'].includes(gget(cells, s.id, d).s));
+  h += line('休み', restIds, s => { const r = reqOf(ctx.month, s.id, d); return r ? `(${esc(reqMark(r))})` : ''; });
+  for(const sg of (an.sug[d] || [])){
+    if(sg.type === 'cnt') h += `<div class="row" style="margin-top:6px"><button class="btn sm" onclick="App.countVisitor('${sg.sid}',${d})">${nm(sg.sid)}を日勤の人数に算入</button></div>`;
+    if(sg.type === 'rmx') h += `<div class="row" style="margin-top:6px"><button class="btn sm dan" onclick="App.ask('${esc(slotName(ctx.cfg, slotOf(ctx.cfg, sg.slot)))}(${md(d)})を外して、この日の前後を組み直します。','removeExt','${sg.key}',${d})">${esc(slotName(ctx.cfg, slotOf(ctx.cfg, sg.slot)))}を外して組み直す</button></div>`;
+  }
+  const nh = by('N');
+  h += candHTML(ctx, cells, d, 'N', nh[0]?.id || '');
+  if(needsE(dy)){ const eh = by('E'); h += candHTML(ctx, cells, d, 'E', eh[0]?.id || ''); }
+  h += `<div class="row" style="margin-top:10px"><button class="btn" onclick="App.lockMany(null,[${d}],true)">🔒 この日をすべて固定</button><button class="btn" onclick="App.lockMany(null,[${d}],false)">この日の固定を解除</button></div>`;
+  h += `<div class="row" style="margin-top:10px"><button class="btn" onclick="App.genDays([${d}])">この日の前後だけ組み直す</button><span class="sp"></span><button class="btn" onclick="App.closeModal()">閉じる</button></div>`;
+  return h;
+}
+
+// ---------------- 操作 ----------------
+async function patchYm(ym, patch){ try { await S.store.patch('months/' + ym, patch); } catch(e){ console.error(e); toast('保存に失敗しました: ' + (e.code||e.message)); } }
+async function commit(changes, text){
+  const n0 = daysIn(S.ym), patch = {}, p2 = {};
+  for(const ch of changes){ if(ch.d > n0) p2[`cells.${ch.sid}.${dk(ch.d - n0)}`] = cleanCell(ch.cell); else patch[`cells.${ch.sid}.${dk(ch.d)}`] = cleanCell(ch.cell); }
+  if(text) patch[`history.${uid('h')}`] = {ts:Date.now(), by:S.user.name, text};
+  await patchMonth(patch);
+  if(Object.keys(p2).length){ if(text) p2[`history.${uid('h')}`] = {ts:Date.now(), by:S.user.name, text:`(前月の勤務表から)${text}`}; await patchYm(shiftYm(S.ym,1), p2); }
+}
+function changesBetween(ctx, A, B, sids){
+  const out = [];
+  for(const sid of sids) for(let d=1; d<=ctx.n; d++){ const a = gget(A,sid,d), b = gget(B,sid,d); if(diffCell(a,b) || !!a?.lock !== !!b?.lock || !!a?.cnt !== !!b?.cnt) out.push({sid, d, cell:b || null}); }
+  return out;
+}
+async function regen(mode, focusDays, extraRemoved){
+  const ctx = makeCtx(); if(extraRemoved) ctx.month = {...ctx.month, removed:{...(ctx.month.removed || {}), [extraRemoved]:true}};
+  const cells = ctx.month.cells || {}, removed = ctx.month.removed || {}, keep = {};
+  const put = (sid,k,c) => { (keep[sid] = keep[sid] || {})[k] = c; };
+  let label = '自動作成(全体)';
+  if(mode === 'all'){
+    for(const sid in cells) for(const k in cells[sid]) if(cells[sid][k].lock || +k.slice(1) <= ctx.prevExt) put(sid, k, cells[sid][k]);
+  } else {
+    const days = new Set(focusDays || []);
+    if(!focusDays){ const an = analyze(ctx, cells); Object.keys(an.day).forEach(d => days.add(+d)); for(const sid in an.cell) Object.keys(an.cell[sid]).forEach(d => days.add(+d)); }
+    if(!days.size){ toast('問題のある日はありません'); return; }
+    const win = new Set(); days.forEach(d => { for(let k=d-2; k<=d+2; k++) if(k >= 1 && k <= ctx.n) win.add(k); });
+    ctx.editDays = win;
+    for(const sid in cells) for(const k in cells[sid]){
+      const d = +k.slice(1), c = cells[sid][k];
+      if(c.lock){ put(sid, k, c); continue; }
+      if(win.has(d)) continue;
+      if(c.s === 'A' && win.has(d-1)) continue;
+      put(sid, k, c);
+    }
+    label = '部分的に組み直し:' + [...win].sort((a,b)=>a-b).map(d => md(d)).join(',');
+  }
+  for(const sid in keep) for(const k in keep[sid]){ const c = keep[sid][k]; if(c.s === 'X' && !c.lock && removed[c.slot + '_' + k]) delete keep[sid][k]; }
+  const G = generate(ctx, keep), n0 = ctx.n0, own = {}, p2 = {};
+  for(const sid in G) for(const k in G[sid]){ if(+k.slice(1) <= n0) (own[sid] = own[sid] || {})[k] = G[sid][k]; }
+  await patchMonth({cells:own, [`history.${uid('h')}`]:{ts:Date.now(), by:S.user.name, text:label}});
+  if(ctx.ext){
+    for(const s of ctx.staff) for(let j=1; j<=ctx.ext; j++){ if(!ed(ctx, n0 + j)) continue; p2[`cells.${s.id}.${dk(j)}`] = cleanCell(G[s.id]?.[dk(n0 + j)]); }
+    p2[`history.${uid('h')}`] = {ts:Date.now(), by:S.user.name, text:`前月の勤務表と一緒に作成:1〜${ctx.ext}日`};
+    await patchYm(shiftYm(S.ym,1), p2);
+  }
+  toast('組み直しました');
+}
+async function confirmVersion(cellsOverride, note){
+  const m = S.month, n = (m.confirmed || 0) + 1, ctx = makeCtx({noExt:true});
+  const prevCells = m.confirmed ? m.versions?.['v' + m.confirmed]?.cells : null;
+  const cells = cellsOverride || m.cells || {}, ts = Date.now(), patch = {};
+  patch['versions.v' + n] = {ts, by:S.user.name, cells};
+  patch.confirmed = n;
+  if(prevCells){
+    const by = {};
+    for(const x of diffCells(prevCells, cells)) (by[x.sid] = by[x.sid] || []).push(`${md(x.d)} ${cellLabel(x.from, ctx.cfg)||'空'}→${cellLabel(x.to, ctx.cfg)||'空'}${x.to?.dc?'(DC)':''}`);
+    for(const sid in by) if(ctx.map[sid]) patch[`notifications.${sid}.${uid('n')}`] = {ts, read:false, text:`勤務表 第${n}版であなたの勤務が変更されました:${by[sid].join('、')}${note ? '(' + note + ')' : ''}`};
+  } else {
+    for(const s of ctx.staff) patch[`notifications.${s.id}.${uid('n')}`] = {ts, read:false, text:`${+S.ym.slice(5)}月の勤務表(第1版)が配信されました。`};
+  }
+  patch[`history.${uid('h')}`] = {ts, by:S.user.name, text:`第${n}版を確定・配信${note ? '(' + note + ')' : ''}`};
+  await patchMonth(patch);
+  toast(`第${n}版を配信しました`);
+}
+async function reqUpdate(sid, d, mut){
+  const cur = clone(reqOf(S.month, sid, d) || {}); mut(cur);
+  const empty = !cur.off && !cur.noDuty && !cur.noEarly && !cur.noAke && !cur.am && !cur.pm && !cur.im && !cur.sg && !(cur.times && cur.times.length) && !cur.note;
+  const patch = {}, late = isLateNow(S.month) || (d <= (+S.prev?.extendDays || 0) && isLateNow(S.prev || {}));
+  if(empty) patch[`requests.${sid}.${dk(d)}`] = null;
+  else { cur.ts = Date.now(); if(late) cur.late = true; patch[`requests.${sid}.${dk(d)}`] = cur; }
+  if(late && !empty && !S.user.admin){
+    const nm = S.cfg.staff.find(s => s.id === sid)?.name || '';
+    S.cfg.staff.filter(a => a.admin && a.active !== false).forEach(a => { patch[`notifications.${a.id}.${uid('n')}`] = {ts:Date.now(), read:false, text:`${nm}:${md(d)}に追加希望(${reqText(cur)})`}; });
+  }
+  await patchMonth(patch);
+}
+function subscribeMonth(){
+  if(S.unsubM) S.unsubM();
+  S.month = undefined; S.prev = null; S.next = null; S.compareV = undefined;
+  const ym = S.ym;
+  const u1 = S.store.subscribe('months/' + ym, m => { if(S.ym !== ym) return; S.month = m || {}; requestRender(); });
+  const u2 = S.store.subscribe('months/' + shiftYm(ym, -1), p => { if(S.ym !== ym) return; S.prev = p || {}; requestRender(); });
+  const u3 = S.store.subscribe('months/' + shiftYm(ym, 1), p => { if(S.ym !== ym) return; S.next = p || {}; requestRender(); });
+  S.unsubM = () => { u1(); u2(); u3(); };
+  render();
+}
+function newStaff(name, type, extra){
+  const base = {id:uid('s'), name, type, canDuty:type==='senmon', canDC:type==='senmon', dayOnly:false, admin:false, active:true, dutyAdj:0, leaves:[], weekly:{}};
+  return Object.assign(base, extra || {});
+}
+function defaultCfg(admin){
+  return {staff:[admin], hospitals:[{id:uid('h'),name:'津島'},{id:uid('h'),name:'豊橋'},{id:uid('h'),name:'成田'}], extSlots:[], settings:{minDay:4, maxMid:2, minGap:1, avgDuty:null}, holidayOverrides:{}};
+}
+
+const App = {
+  month(k){ S.ym = shiftYm(S.ym, k); S.modal = null; subscribeMonth(); },
+  tab(t){ S.tab = t; S.modal = null; render(); },
+  async login(){
+    const sid = document.getElementById('lg_sid').value, pin = document.getElementById('lg_pin').value;
+    const s = S.cfg.staff.find(x => x.id === sid); if(!s) return;
+    if(s.locked){ toast('PINを続けて間違えたためロックされています。調整役に解除を依頼してください'); return; }
+    if(await hashPin(sid, pin) !== s.pinHash){
+      const fails = (+s.failCount || 0) + 1, lock = fails >= MAX_FAILS;
+      await saveCfg(c => { const t = c.staff.find(x => x.id === sid); if(t){ t.failCount = fails; if(lock){ t.locked = true; t.lockedAt = Date.now(); } } });
+      if(lock){
+        const patch = {}, ts = Date.now();
+        S.cfg.staff.filter(a => a.admin && a.active !== false && a.id !== sid).forEach(a => { patch[`notifications.${a.id}.${uid('n')}`] = {ts, read:false, text:`${s.name} のアカウントが、PINを${MAX_FAILS}回続けて間違えたためロックされました。「スタッフ」から解除できます。`}; });
+        if(Object.keys(patch).length) await patchMonth(patch);
+        toast(`PINを${MAX_FAILS}回続けて間違えたため、ロックしました。調整役に解除を依頼してください`);
+      } else toast(`PINが違います(あと${MAX_FAILS - fails}回間違えるとロックされます)`);
+      document.getElementById('lg_pin') && (document.getElementById('lg_pin').value = '');
+      return;
+    }
+    if(s.failCount) await saveCfg(c => { const t = c.staff.find(x => x.id === sid); if(t) t.failCount = 0; });
+    localStorage.setItem('kinmu:sid', sid); S.user = S.cfg.staff.find(x => x.id === sid) || s; S.tab = null; render();
+  },
+  openRow(sid){ S.modal = {type:'row', sid, live:true}; renderModal(); },
+  async lockMany(sids, days, val){
+    const ctx = makeCtx(), cells = ctx.month.cells || {}, ch = [];
+    const ss = sids || ctx.staff.map(s => s.id), ds = days || ctx.days.map(x => x.d);
+    for(const sid of ss) for(const d of ds){
+      const c = gget(cells, sid, d);
+      if(val){ if(c?.lock) continue; ch.push({sid, d, cell: c ? {...c, lock:true} : {s:'', lock:true}}); }
+      else { if(!c?.lock) continue; if(!c.s) ch.push({sid, d, cell:null}); else { const o = {...c}; delete o.lock; ch.push({sid, d, cell:o}); } }
+    }
+    if(!ch.length){ toast('変更はありません'); return; }
+    const who = sids ? sids.map(id => ctx.map[id]?.name).join('・') : '全員', when = days ? days.map(md).join(',') : '全日';
+    await commit(ch, `${who} ${when}:固定${val ? 'ON' : 'OFF'}(${ch.length}マス)`);
+    toast(`${ch.length}マスを${val ? '固定' : '固定解除'}しました`);
+  },
+  async lockRange(sid, val){
+    const a = +document.getElementById('lk_from').value, b = +document.getElementById('lk_to').value;
+    if(!a || !b || a > b){ toast('日付の範囲を正しく入れてください'); return; }
+    const ds = []; for(let d = a; d <= b; d++) ds.push(d);
+    await App.lockMany([sid], ds, val);
+  },
+  async unlock(id){ await saveCfg(c => { const t = c.staff.find(x => x.id === id); if(t){ t.locked = false; t.failCount = 0; delete t.lockedAt; } }); toast('ロックを解除しました'); },
+  logout(){ localStorage.removeItem('kinmu:sid'); S.user = null; S.modal = null; render(); },
+  async setupCreate(){
+    const name = document.getElementById('su_name').value.trim(), pin = document.getElementById('su_pin').value;
+    if(!name || pin.length < 4){ toast('名前と4桁以上のPINを入れてください'); return; }
+    const a = newStaff(name, 'senmon', {admin:true}); a.pinHash = await hashPin(a.id, pin);
+    localStorage.setItem('kinmu:sid', a.id);
+    await S.store.set('config', defaultCfg(a));
+  },
+  async setupDemo(){
+    const a = newStaff('調整役', 'senmon', {admin:true}); a.pinHash = await hashPin(a.id, '0000');
+    const cfg = defaultCfg(a);
+    const add = (name, type, extra) => { const s = newStaff(name, type, extra); cfg.staff.push(s); return s; };
+    const sen = ['A','B','C','D','E','F','G'].map(x => add(x + '先生', 'senmon'));
+    const k1 = add('H先生', 'senkou', {canDuty:true}); add('I先生', 'senkou', {canDuty:true, canDC:true});
+    ['J','K','L','M'].forEach(x => add(x + '先生', 'senkou'));
+    add('N先生', 'senkou', {dayOnly:true});
+    const v = add('X先生(他院)', 'visitor', {weekly:{3:'D'}});
+    sen[6].dutyAdj = -1;
+    const [hT, hY, hN] = cfg.hospitals;
+    cfg.extSlots = [
+      {id:uid('x'), hospId:hT.id, freq:'weekly', weekday:2, count:1, start:'09:00', end:'17:00', nextAke:false, skipHoliday:true, mode:'auto', eligible:[], fixedStaff:[], priority:'optional'},
+      {id:uid('x'), hospId:hY.id, freq:'weekly', weekday:4, count:1, start:'09:00', end:'17:00', nextAke:false, skipHoliday:true, mode:'auto', eligible:sen.map(s=>s.id), fixedStaff:[], priority:'optional'},
+      {id:uid('x'), hospId:hN.id, label:'当直', freq:'weekly', weekday:5, count:1, start:'17:00', end:'09:00', nextAke:true, skipHoliday:true, mode:'auto', eligible:sen.map(s=>s.id), fixedStaff:[], priority:'must'}
+    ];
+    for(const s of cfg.staff) if(!s.pinHash) s.pinHash = await hashPin(s.id, '0000');
+    const n = daysIn(S.ym), req = {}, R = (sid, d, o) => { (req[sid] = req[sid] || {})[dk(d)] = Object.assign({ts:Date.now()}, o); };
+    R(sen[0].id, 3, {off:true}); R(sen[0].id, 4, {off:true}); R(sen[1].id, 10, {noDuty:true}); R(sen[1].id, 11, {noAke:true});
+    R(sen[2].id, 15, {times:[{from:'13:00', to:'18:00'}]}); R(sen[3].id, 20, {off:true, note:'学会'}); R(sen[4].id, 7, {noDuty:true});
+    R(cfg.staff[9].id, 12, {im:true}); R(cfg.staff[10].id, 18, {sg:true}); R(cfg.staff[11].id, 5, {off:true}); R(k1.id, 22, {noDuty:true});
+    R(sen[5].id, Math.min(25, n), {off:true});
+    localStorage.setItem('kinmu:sid', a.id);
+    await S.store.set('months/' + S.ym, {requests:req, deadline:''});
+    await S.store.set('config', cfg);
+    toast('デモデータを作成しました。「自動作成(全体)」を押してください');
+  },
+  closeModal(){ S.modal = null; renderModal(); },
+  ask(text, act, ...args){ S.modal = {type:'ask', text, act, args}; renderModal(); },
+  async doAsk(){ const {act, args} = S.modal; S.modal = null; renderModal(); await App[act](...args); },
+  async genAll(){ toast('作成中…'); await new Promise(r => setTimeout(r, 30)); await regen('all'); },
+  async genPartial(){ await regen('partial'); },
+  async genDays(ds){ S.modal = null; renderModal(); await regen('partial', ds); },
+  async confirmVersion(){ await confirmVersion(); },
+  setCompare(v){ S.compareV = v ? +v : null; render(); },
+  compareWith(n){ S.compareV = n; S.tab = 'roster'; render(); },
+  openCell(sid, d){ S.modal = {type:'cell', sid, d, live:true}; renderModal(); },
+  openDay(d){ S.modal = {type:'day', d, live:true}; renderModal(); },
+  async setShift(sid, d, code){
+    const ctx = makeCtx(), cells = ctx.month.cells || {}, cur = gget(cells, sid, d), ch = [];
+    let nc = code ? {s:code} : null;
+    if(nc && cur?.lock) nc.lock = true;
+    if(code === 'D' && cur?.dc) nc.dc = true;
+    if(code === 'D' && cur?.cnt) nc.cnt = true;
+    if(code === 'X'){ const dy = ctx.days[d-1]; const sl = (ctx.cfg.extSlots||[]).find(x => slotOn(x, dy)) || ctx.cfg.extSlots[0]; if(!sl){ toast('先に「外勤」で枠を作ってください'); return; } nc.slot = cur?.slot || sl.id; }
+    ch.push({sid, d, cell:nc});
+    if(code === 'N' && d < ctx.n){ const nx = gget(cells, sid, d+1); if(!nx || (['D','M','O'].includes(nx.s) && !nx.lock)) ch.push({sid, d:d+1, cell:{s:'A'}}); }
+    if(cur?.s === 'N' && code !== 'N' && d < ctx.n){ const nx = gget(cells, sid, d+1); if(nx?.s === 'A' && !nx.lock) ch.push({sid, d:d+1, cell:fallbackCell(ctx, sid, d+1, null)}); }
+    await commit(ch, `${ctx.map[sid].name} ${md(d)}:${cellName(cur, ctx.cfg)}→${cellName(nc, ctx.cfg)}`);
+  },
+  async toggleFlag(sid, d, f){
+    const ctx = makeCtx(), cells = ctx.month.cells || {};
+    let cur = clone(gget(cells, sid, d));
+    if(!cur){ if(f !== 'lock') return; cur = {s:''}; }
+    if(f === 'lock' && cur.lock && !cur.s){ await commit([{sid, d, cell:null}], `${ctx.map[sid].name} ${md(d)}:固定OFF`); return; }
+    const ch = [];
+    if(f === 'dc' && !cur.dc){ for(const s of ctx.staff){ const c = gget(cells, s.id, d); if(c?.dc && s.id !== sid){ const o = clone(c); delete o.dc; ch.push({sid:s.id, d, cell:o}); } } }
+    cur[f] = !cur[f]; ch.push({sid, d, cell:cur});
+    const lab = {dc:'DC担当', lock:'固定', cnt:'日勤に算入'}[f];
+    await commit(ch, `${ctx.map[sid].name} ${md(d)}:${lab}${cur[f] ? 'ON' : 'OFF'}`);
+  },
+  async setSlot(sid, d, slot){ const ctx = makeCtx(), cur = clone(gget(ctx.month.cells || {}, sid, d)); if(!cur) return; cur.slot = slot; await commit([{sid, d, cell:cur}], `${ctx.map[sid].name} ${md(d)}:外勤先を${slotName(ctx.cfg, slotOf(ctx.cfg, slot))}に変更`); },
+  async replaceDuty(from, to, d, code){
+    const ctx = makeCtx(), cells = ctx.month.cells || {};
+    const C = applyReplace(ctx, cells, from || null, to, d, code);
+    const ch = changesBetween(ctx, cells, C, [from, to].filter(Boolean));
+    await commit(ch, `${md(d)} ${SH[code].n}:${from ? ctx.map[from].name + '→' : ''}${ctx.map[to].name}`);
+    toast('変更しました。日勤の人数などはチェック結果で確認してください');
+  },
+  async swapDuty(p, q, d, e){
+    const ctx = makeCtx(), cells = ctx.month.cells || {};
+    const C = applyDutySwap(ctx, cells, p, q, d, e);
+    await commit(changesBetween(ctx, cells, C, [p, q]), `直の交換:${ctx.map[p].name}の${md(d)} ⇔ ${ctx.map[q].name}の${md(e)}`);
+    toast('交換しました');
+  },
+  async countVisitor(sid, d){ const ctx = makeCtx(), cur = clone(gget(ctx.month.cells || {}, sid, d)); if(!cur) return; cur.cnt = true; await commit([{sid, d, cell:cur}], `${ctx.map[sid].name} ${md(d)}:日勤の人数に算入`); },
+  async removeExt(key, d){
+    const n0 = daysIn(S.ym), i = key.lastIndexOf('_');
+    if(d > n0) await patchYm(shiftYm(S.ym,1), {[`removed.${key.slice(0, i)}_${dk(d - n0)}`]:true});
+    else await patchMonth({[`removed.${key}`]:true});
+    await regen('partial', [d], key);
+  },
+  async restoreExt(key){ await patchMonth({[`removed.${key}`]:null, [`history.${uid('h')}`]:{ts:Date.now(), by:S.user.name, text:'外した外勤を元に戻す:' + key}}); toast('元に戻しました。組み直すと割り当てられます'); },
+  async restoreVersion(n){ const v = S.month.versions?.['v' + n]; if(!v) return; await patchMonth({cells:v.cells || {}, [`history.${uid('h')}`]:{ts:Date.now(), by:S.user.name, text:`第${n}版を下書きに戻した`}}); toast('下書きに戻しました'); },
+  csv(){
+    const ctx = makeCtx(), cells = ctx.month.cells || {};
+    const rows = [['氏名', ...ctx.days.map(x => `${x.d}(${WD[x.wd]})`), '直', '早', '日', '中', 'DC', '外']];
+    for(const s of ctx.staff){
+      const r = [s.name], cnt = {N:0,E:0,D:0,M:0,DC:0,X:0};
+      for(const dy of ctx.days){ const c = gget(cells, s.id, dy.d); r.push(cellLabel(c, ctx.cfg) + (c?.dc ? 'DC' : '')); if(c && cnt[c.s] !== undefined) cnt[c.s]++; if(c?.dc) cnt.DC++; }
+      rows.push([...r, cnt.N, cnt.E, cnt.D, cnt.M, cnt.DC, cnt.X]);
+    }
+    const csv = '﻿' + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = `勤務表_${S.ym}.csv`; a.click();
+  },
+  // 希望
+  setReqTarget(id){ S.reqTarget = id; render(); },
+  async reqToggle(sid, d, f){ await reqUpdate(sid, d, r => { r[f] = !r[f]; if(f === 'im' && r.im) r.sg = false; if(f === 'sg' && r.sg) r.im = false; }); },
+  async reqAddTime(sid, d){
+    const a = document.getElementById('tf_' + d).value, b = document.getElementById('tt_' + d).value;
+    if(!a || !b){ toast('開始と終了の時刻を入れてください'); return; }
+    await reqUpdate(sid, d, r => { r.times = r.times || []; r.times.push({from:a, to:b}); });
+  },
+  async reqDelTime(sid, d, i){ await reqUpdate(sid, d, r => { r.times.splice(i, 1); }); },
+  async reqNote(sid, d, v){ await reqUpdate(sid, d, r => { r.note = v.trim(); }); },
+  // 交代申請
+  swf(k, v){ S.swf[k] = v; if(k === 'to') S.swf.e = ''; render(); },
+  async swapSubmit(){
+    const f = S.swf, me = S.user.id;
+    if(!f.d || !f.to){ toast('自分の日と相手を選んでください'); return; }
+    if(f.type === 'swap' && !f.e){ toast('相手の日を選んでください'); return; }
+    const id = uid('w'), ts = Date.now(), note = document.getElementById('swnote').value.trim();
+    await patchMonth({[`swaps.${id}`]:{from:me, to:f.to, d:+f.d, e:f.type === 'swap' ? +f.e : null, note, status:'pending', ts},
+      [`notifications.${f.to}.${uid('n')}`]:{ts, read:false, text:`${S.user.name}から交代の申請があります(${md(+f.d)})。「交代申請」で承諾・辞退してください。`}});
+    S.swf = {}; toast('申請しました');
+  },
+  async swapRespond(id, ok){
+    const x = S.month.swaps[id], ts = Date.now(), patch = {[`swaps.${id}.status`]:ok ? 'accepted' : 'declined'};
+    patch[`notifications.${x.from}.${uid('n')}`] = {ts, read:false, text:`${S.user.name}が交代申請(${md(x.d)})を${ok ? '承諾しました。調整役の承認待ちです' : '辞退しました'}。`};
+    if(ok) S.cfg.staff.filter(a => a.admin && a.active !== false).forEach(a => { patch[`notifications.${a.id}.${uid('n')}`] = {ts, read:false, text:`交代申請の承認待ちがあります(${md(x.d)})。`}; });
+    await patchMonth(patch);
+  },
+  async swapApprove(id, ok){
+    const x = S.month.swaps[id], ts = Date.now(), ctx = makeCtx({noExt:true});
+    const nm = sid => ctx.map[sid]?.name || '';
+    if(!ok){
+      await patchMonth({[`swaps.${id}.status`]:'rejected', [`notifications.${x.from}.${uid('n')}`]:{ts, read:false, text:`交代申請(${md(x.d)})は調整役により却下されました。`}, [`notifications.${x.to}.${uid('n')}`]:{ts, read:false, text:`交代申請(${md(x.d)})は調整役により却下されました。`}});
+      return;
+    }
+    const draft = S.month.cells || {}, ds = swapDays(draft, x, ctx.n), C = swapRows(ctx, draft, x.from, x.to, ds);
+    await commit(changesBetween(ctx, draft, C, [x.from, x.to]), `交代申請を承認:${nm(x.from)} ⇔ ${nm(x.to)}(${ds.map(md).join(',')})`);
+    await patchMonth({[`swaps.${id}.status`]:'approved'});
+    await confirmVersion(C, '交代申請の承認');
+  },
+  async swapCancel(id){ await patchMonth({[`swaps.${id}.status`]:'cancelled'}); },
+  async readAll(){ const nn = S.month?.notifications?.[S.user.id] || {}, patch = {}; for(const k in nn) if(!nn[k].read) patch[`notifications.${S.user.id}.${k}.read`] = true; await patchMonth(patch); },
+  async changePin(){
+    const p0 = document.getElementById('pp0').value, p1 = document.getElementById('pp1').value, p2 = document.getElementById('pp2').value;
+    const me = S.cfg.staff.find(s => s.id === S.user.id);
+    if(await hashPin(me.id, p0) !== me.pinHash){ toast('今のPINが違います'); return; }
+    if(p1.length < 4 || p1 !== p2){ toast('新しいPINは4桁以上で、2回同じものを入れてください'); return; }
+    const h = await hashPin(me.id, p1);
+    await saveCfg(c => { c.staff.find(s => s.id === me.id).pinHash = h; });
+    toast('PINを変更しました');
+  },
+  // スタッフ
+  staffEdit(id){
+    const s = id ? clone(S.cfg.staff.find(x => x.id === id)) : newStaff('', 'senmon');
+    S.modal = {type:'staff', id, draft:s}; renderModal();
+  },
+  dset(f, v, re, typeChange){
+    const x = S.modal.draft; x[f] = v;
+    if(typeChange && !S.modal.id){ x.canDuty = v === 'senmon'; x.canDC = v === 'senmon'; if(v === 'visitor'){ x.weekly = x.weekly || {}; } }
+    if(re) renderModal();
+  },
+  dsetWeekly(w, v){ const x = S.modal.draft; x.weekly = x.weekly || {}; if(v) x.weekly[w] = v; else delete x.weekly[w]; },
+  leaveAdd(){
+    const label = document.getElementById('lv_label').value.trim(), from = document.getElementById('lv_from').value, to = document.getElementById('lv_to').value;
+    if(!from || !to || from > to){ toast('期間を正しく入れてください'); return; }
+    S.modal.draft.leaves.push({label:label || '休職', from, to}); renderModal();
+  },
+  leaveDel(i){ S.modal.draft.leaves.splice(i, 1); renderModal(); },
+  async staffSave(){
+    const x = S.modal.draft, isNew = !S.modal.id;
+    if(!x.name.trim()){ toast('氏名を入れてください'); return; }
+    const pin = document.getElementById('st_pin').value;
+    if(pin && pin.length < 4){ toast('PINは4桁以上です'); return; }
+    if(pin || isNew){ x.pinHash = await hashPin(x.id, pin || '0000'); x.locked = false; x.failCount = 0; delete x.lockedAt; }
+    if(x.type === 'visitor'){ x.canDuty = false; x.canDC = false; }
+    if(!isNew && S.modal.id === S.user.id && !x.admin){ toast('自分の調整役権限は外せません'); return; }
+    await saveCfg(c => { const i = c.staff.findIndex(s => s.id === x.id); if(i >= 0) c.staff[i] = x; else c.staff.push(x); });
+    S.modal = null; renderModal(); toast('保存しました');
+  },
+  staffDelete(id){ if(id === S.user.id){ toast('自分自身は削除できません'); return; } App.ask('このスタッフを削除します。過去の勤務表からも表示されなくなります。一時的に外すだけなら「有効」のチェックを外してください。', 'staffDeleteDo', id); },
+  async staffDeleteDo(id){ await saveCfg(c => { c.staff = c.staff.filter(s => s.id !== id); }); },
+  async staffMove(id, k){ await saveCfg(c => { const i = c.staff.findIndex(s => s.id === id), j = i + k; if(j < 0 || j >= c.staff.length) return; [c.staff[i], c.staff[j]] = [c.staff[j], c.staff[i]]; }); },
+  // 外勤
+  async hospAdd(){ const v = document.getElementById('hp_new').value.trim(); if(!v) return; await saveCfg(c => c.hospitals.push({id:uid('h'), name:v})); },
+  async hospRename(id, v){ await saveCfg(c => { c.hospitals.find(h => h.id === id).name = v.trim(); }); },
+  async hospDel(id){ if(S.cfg.extSlots.some(s => s.hospId === id)){ toast('この派遣先の枠を先に削除してください'); return; } await saveCfg(c => { c.hospitals = c.hospitals.filter(h => h.id !== id); }); },
+  slotEdit(id){
+    const s = id ? clone(S.cfg.extSlots.find(x => x.id === id)) : {id:uid('x'), hospId:S.cfg.hospitals[0]?.id, freq:'weekly', weekday:1, count:1, start:'09:00', end:'17:00', nextAke:false, skipHoliday:true, mode:'auto', eligible:[], fixedStaff:[], priority:'optional'};
+    S.modal = {type:'slot', id, draft:s}; renderModal();
+  },
+  dToggleArr(f, id){ const x = S.modal.draft; x[f] = x[f] || []; const i = x[f].indexOf(id); if(i >= 0) x[f].splice(i, 1); else x[f].push(id); },
+  async slotSave(){
+    const x = S.modal.draft;
+    if(x.mode === 'fixed' && !(x.fixedStaff||[]).length){ toast('固定の担当者を選んでください'); return; }
+    await saveCfg(c => { const i = c.extSlots.findIndex(s => s.id === x.id); if(i >= 0) c.extSlots[i] = x; else c.extSlots.push(x); });
+    S.modal = null; renderModal(); toast('保存しました');
+  },
+  slotDel(id){ App.ask('この外勤の枠を削除します。', 'slotDelDo', id); },
+  async slotDelDo(id){ await saveCfg(c => { c.extSlots = c.extSlots.filter(s => s.id !== id); }); },
+  // 設定
+  async setSetting(k, v){ await saveCfg(c => { c.settings[k] = v; }); },
+  async setExtend(v){ v = Math.max(0, Math.min(10, Math.floor(+v || 0))); await patchMonth({extendDays: v || null}); },
+  async spAdd(){
+    const name = document.getElementById('sp_name').value.trim() || '年末年始', from = document.getElementById('sp_from').value, to = document.getElementById('sp_to').value;
+    if(!from || !to || from > to){ toast('期間を正しく入れてください'); return; }
+    const split = document.getElementById('sp_split').checked;
+    await saveCfg(c => { c.specialPeriods = c.specialPeriods || []; c.specialPeriods.push({id:uid('p'), name, from, to, split}); });
+  },
+  async spSplit(id, v){ await saveCfg(c => { const sp = (c.specialPeriods || []).find(x => x.id === id); if(sp) sp.split = v; }); },
+  async spDel(id){ await saveCfg(c => { c.specialPeriods = (c.specialPeriods || []).filter(x => x.id !== id); }); },
+  async setDeadline(v){ await patchMonth({deadline:v || null}); },
+  async holToggle(isoD){ await saveCfg(c => { const o = c.holidayOverrides[isoD]; if(o === undefined) c.holidayOverrides[isoD] = true; else if(o === true) c.holidayOverrides[isoD] = 'split'; else if(o === 'split') c.holidayOverrides[isoD] = false; else delete c.holidayOverrides[isoD]; }); },
+  async exportJSON(){
+    const months = {}; for(const ym of await S.store.listMonths()) months[ym] = await S.store.get('months/' + ym);
+    const data = {app:'kinmu', exported:new Date().toISOString(), config:S.cfg, months};
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], {type:'application/json'})); a.download = `勤務表バックアップ_${todayISO()}.json`; a.click();
+  },
+  importJSON(input){
+    const f = input.files[0]; if(!f) return;
+    const rd = new FileReader();
+    rd.onload = () => { try { const data = JSON.parse(rd.result); if(data.app !== 'kinmu' || !data.config) throw new Error('形式が違います'); S._import = data; App.ask(`バックアップ(${data.exported || ''})を読み込みます。いまの設定と、バックアップに含まれる月のデータは上書きされます。`, 'importDo'); } catch(e){ toast('読み込めません: ' + e.message); } };
+    rd.readAsText(f);
+  },
+  async importDo(){ const data = S._import; for(const ym in (data.months || {})) await S.store.set('months/' + ym, data.months[ym] || {}); await S.store.set('config', data.config); toast('読み込みました'); },
+  saveFbConfig(){
+    const t = document.getElementById('fbconf').value.trim();
+    try { const o = t.startsWith('{') ? (new Function('return ' + t))() : (new Function('return {' + t + '}'))(); if(!o.projectId) throw 0; localStorage.setItem('kinmu:fbconfig', JSON.stringify(o)); location.reload(); }
+    catch(e){ toast('設定値を読み取れません。{ } ごと貼り付けてください'); }
+  },
+  clearFbConfig(){ localStorage.removeItem('kinmu:fbconfig'); location.reload(); }
+};
+window.App = App;
+
+async function boot(){
+  let conf = FIREBASE_CONFIG;
+  if(!conf){ try { conf = JSON.parse(localStorage.getItem('kinmu:fbconfig') || 'null'); } catch(e){} }
+  if(conf){ try { S.store = new FireStore(await loadFirebase(conf)); S.mode = 'firebase'; } catch(e){ console.error(e); toast('Firebaseに接続できません。デモモードで動きます'); } }
+  if(!S.store){ S.store = new LocalStore(); S.mode = 'local'; }
+  const now = new Date(), nm = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  S.ym = ymStr(nm.getFullYear(), nm.getMonth() + 1);
+  S.store.subscribe('config', cfg => {
+    S.cfg = normCfg(cfg);
+    if(S.cfg){ const sid = localStorage.getItem('kinmu:sid'); S.user = S.cfg.staff.find(s => s.id === sid && s.active !== false) || null; } else S.user = null;
+    requestRender();
+  });
+  subscribeMonth();
+}
+boot();
+</script>
+</body>
+</html>
